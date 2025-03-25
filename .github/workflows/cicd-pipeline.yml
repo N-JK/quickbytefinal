@@ -6,15 +6,34 @@ on:
       - master  # Adjust this to your main branch
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Checkout the code from the repository
+    # Step 1: Checkout the code from the repository\
     - name: Checkout code
       uses: actions/checkout@v2
 
-    # Step 2: Deploy to EC2
+    # Step 2: Set up Docker Buildx
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    # Step 3: Login to DockerHub
+    - name: Login to DockerHub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    # Step 4: Build and push the Docker image
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        push: true
+        tags: nibin42/quickbyte:${{ github.sha }}
+
+    # Step 5: Deploy to EC2 and run the containers
     - name: Deploy to EC2
       uses: appleboy/ssh-action@master
       with:
@@ -22,57 +41,24 @@ jobs:
         username: "ubuntu"
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          # Update and install python3-venv
-          sudo apt update
-          sudo apt install -y python3-venv
-
-          # Navigate to the project directory
-          cd /home/ubuntu/quickbyte
-
-          # Check available disk space
-          df -h
-
-          # Remove old code, including hidden files
-          rm -rf .[^.]* *
-
-          # Ensure the directory is owned by the correct user
-          sudo chown -R ubuntu:ubuntu /home/ubuntu/quickbyte
-
-          # Pull the latest code from the repository
-          git clone https://github.com/N-JK/quickbytefinal.git .
-
-          # Debug: List files in the directory to verify contents
-          echo "Listing files after clone:"
-          ls -la
-
-          # Create and activate the virtual environment
-          python3 -m venv venv
-          source venv/bin/activate
-
-          # Debug: Verify Python and pip versions
-          echo "Python version:"
-          python3 --version
-          echo "Pip version:"
-          pip --version
-
-          # Install dependencies
-          if [ -f "requirements.txt" ]; then
-            pip install -r requirements.txt
-          else
-            echo "Error: requirements.txt not found!"
-            exit 1
+          # Stop and remove running containers on port 8000
+          containers=$(docker ps -q --filter publish=8000)
+          if [ -n "$containers" ]; then
+            docker stop $containers
+            docker rm $containers
           fi
 
-          # Apply database migrations
-          if [ -f "manage.py" ]; then
-            python3 manage.py migrate
-          else
-            echo "Error: manage.py not found!"
-            exit 1
+          # Pull the new image
+          docker pull nibin42/quickbyte:${{ github.sha }}
+
+          # Stop and remove the existing container
+          if docker ps -a --format '{{.Names}}' | grep -q '^quickbyte$'; then
+            docker stop quickbyte
+            docker rm quickbyte
           fi
 
-          # Collect static files
-          python3 manage.py collectstatic --noinput
+          # Run the new container
+          docker run -d --name quickbyte -p 8000:8000 nibin42/quickbyte:${{ github.sha }}
 
-          # Start the Django development server
-          nohup python3 manage.py runserver 0.0.0.0:8000 > /dev/null 2>&1 &
+          # Clean up unused Docker resources
+          docker system prune -af
