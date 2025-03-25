@@ -1,0 +1,49 @@
+<!-- {% extends 'base.html' %}
+
+{% block title %}Restaurants - QuickByte{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <form method="get" class="d-flex">
+            <input type="text" name="query" class="form-control me-2" placeholder="Search restaurants..." value="{{ request.GET.query }}">
+            <select name="cuisine" class="form-select me-2">
+                <option value="">All Cuisines</option>
+                {% for cuisine in cuisines %}
+                    <option value="{{ cuisine }}" {% if request.GET.cuisine == cuisine %}selected{% endif %}>{{ cuisine }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+    </div>
+</div>
+
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    {% for restaurant in restaurants %}
+        <div class="col">
+            <div class="card h-100">
+                {% if restaurant.profile_picture %}
+                    <img src="{{ restaurant.profile_picture.url }}" class="card-img-top" alt="{{ restaurant.name }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ restaurant.name }}</h5>
+                    <p class="card-text">{{ restaurant.description|truncatewords:20 }}</p>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            <i class="bi bi-star-fill text-warning"></i> {{ restaurant.average_rating|floatformat:1 }}
+                        </small>
+                        <small class="text-muted ms-2">{{ restaurant.cuisine_type }}</small>
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'restaurant_detail' restaurant.pk %}" class="btn btn-primary">View Menu</a>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">No restaurants found.</div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %} -->

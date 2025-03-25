@@ -1,0 +1,52 @@
+{% extends 'restaurant/base.html' %}
+
+{% block content %}
+<div class="container custom-margin-top">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Event Promotion Payment</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h5>Payment Details:</h5>
+                        <p><strong>Amount:</strong> ${{ admin_payment.promotion_price }}</p>
+                        <p><strong>UPI ID:</strong> {{ admin_payment.upi_id }}</p>
+                        <hr>
+                        <p><strong>Bank Details:</strong></p>
+                        <p>Account Number: {{ admin_payment.account_number }}</p>
+                        <p>IFSC Code: {{ admin_payment.ifsc_code }}</p>
+                        <p>Bank Name: {{ admin_payment.bank_name }}</p>
+                        <p>Account Holder: {{ admin_payment.account_holder_name }}</p>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Transaction ID</label>
+                            {{ form.transaction_id }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Payment Screenshot</label>
+                            {{ form.payment_screenshot }}
+                            <small class="text-muted">Please upload a screenshot of your payment</small>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                Submit Payment Details
+                            </button>
+                            <a href="{% url 'event_list' %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,262 @@
+{% extends 'customer/base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Notification Container -->
+<div id="notification-container" class="notification-container"></div>
+
+<div class="container mt-5">
+    <h2>My Favorites</h2>
+    
+    <h3 class="mt-4">Favorite Restaurants</h3>
+    <div class="row">
+        {% for favorite in favorite_restaurants %}
+            <div class="col-md-4 mb-4" id="restaurant-{{ favorite.restaurant.id }}">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ favorite.restaurant.name }}</h5>
+                        <p class="card-text">{{ favorite.restaurant.description }}</p>
+                        <p class="card-text">
+                            <small class="text-muted">Added on {{ favorite.created_at|date }}</small>
+                        </p>
+                        <a href="{% url 'restaurant_detail' favorite.restaurant.id %}" 
+                           class="btn btn-primary">View Restaurant</a>
+                        <div class="heart-icon-container">
+                            <i class="fas fa-heart favorite-icon active"
+                               data-restaurant-id="{{ favorite.restaurant.id }}"
+                               data-name="{{ favorite.restaurant.name }}"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <p>No favorite restaurants yet.</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <h3 class="mt-4">Favorite Food Items</h3>
+    <div class="row">
+        {% for favorite in favorite_food_items %}
+            <div class="col-md-4 mb-4" id="food-{{ favorite.food_item.id }}">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ favorite.food_item.name }}</h5>
+                        <p class="card-text">{{ favorite.food_item.description }}</p>
+                        <p class="card-text">
+                            <small class="text-muted">Added on {{ favorite.created_at|date }}</small>
+                        </p>
+                        <p class="card-text">Price: {{ favorite.food_item.price }}</p>
+                        <div class="heart-icon-container">
+                            <i class="fas fa-heart favorite-icon active"
+                               data-food-item-id="{{ favorite.food_item.id }}"
+                               data-name="{{ favorite.food_item.name }}"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <p>No favorite food items yet.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        function showNotification(message, isError = false) {
+            const container = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+            notification.className = `notification ${isError ? 'error' : 'success'}`;
+            notification.textContent = message;
+            
+            container.appendChild(notification);
+            
+            // Trigger reflow
+            notification.offsetHeight;
+            
+            // Add show class for animation
+            notification.classList.add('show');
+            
+            // Remove notification after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
+    
+        function toggleFavorite(type, id, element) {
+            const url = type === 'restaurant' 
+                ? `/toggle-favorite-restaurant/${id}/`
+                : `/toggle-favorite-food-item/${id}/`;
+    
+            const name = element.dataset.name;
+            
+            // Add heart beat animation
+            element.classList.add('heart-beat');
+    
+            // Get CSRF token from cookie
+            const csrftoken = getCookie('csrftoken');
+    
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin'  // Include cookies in the request
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (!data.is_favorite) {
+                        // Remove card with animation
+                        const card = element.closest('.card');
+                        card.classList.add('removing');
+                        
+                        setTimeout(() => {
+                            const cardContainer = card.closest('.col-md-4');
+                            cardContainer.remove();
+                        }, 300);
+                    }
+                    showNotification(data.message);
+                } else {
+                    showNotification(data.error || 'Error updating favorites', true);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error updating favorites', true);
+            })
+            .finally(() => {
+                // Remove heart beat animation
+                setTimeout(() => {
+                    element.classList.remove('heart-beat');
+                }, 300);
+            });
+        }
+    
+        // Function to get CSRF token from cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    
+        // Handle restaurant favorites
+        document.querySelectorAll('[data-restaurant-id]').forEach(icon => {
+            icon.addEventListener('click', function() {
+                const restaurantId = this.dataset.restaurantId;
+                toggleFavorite('restaurant', restaurantId, this);
+            });
+        });
+    
+        // Handle food item favorites
+        document.querySelectorAll('[data-food-item-id]').forEach(icon => {
+            icon.addEventListener('click', function() {
+                const foodItemId = this.dataset.foodItemId;
+                toggleFavorite('food-item', foodItemId, this);
+            });
+        });
+    });
+    </script>
+    
+<style>
+    .notification {
+        background-color: #333;
+        color: white;
+        padding: 15px 25px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        opacity: 0;
+        transform: translateY(-20px);
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .notification.success {
+        background-color: #28a745;
+    }
+    
+    .notification.error {
+        background-color: #dc3545;
+    }
+    .notification-container {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+   }
+
+    .notification.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .heart-icon-container {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        cursor: pointer;
+    }
+
+    .favorite-icon {
+        font-size: 1.5rem;
+        color: #ff0000;
+        transition: all 0.3s ease;
+    }
+
+    .favorite-icon:hover {
+        transform: scale(1.1);
+    }
+
+    .card {
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .card.removing {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+
+    @keyframes heartBeat {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+    }
+
+    .heart-beat {
+        animation: heartBeat 0.3s ease-in-out;
+    }
+</style>
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+

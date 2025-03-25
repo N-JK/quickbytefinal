@@ -1,0 +1,285 @@
+<!-- templates/customer/cart.html -->
+<!-- {% extends 'base.html' %}
+
+{% block title %}Shopping Cart{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3>Shopping Cart</h3>
+            </div>
+            <div class="card-body">
+                {% if cart and cart.items.exists %}
+                    {% for item in cart.items.all %}
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <img src="{{ item.food_item.image.url }}" class="img-fluid rounded" alt="{{ item.food_item.name }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5>{{ item.food_item.name }}</h5>
+                                        <p class="text-muted">{{ item.food_item.restaurant.name }}</p>
+                                        <div class="mt-2">
+                                            <div class="input-group" style="width: 150px;">
+                                                <button class="btn btn-outline-secondary update-quantity" 
+                                                        data-item-id="{{ item.id }}" data-action="decrease">-</button>
+                                                <input type="number" class="form-control text-center item-quantity" 
+                                                       value="{{ item.quantity }}" min="1" max="10">
+                                                <button class="btn btn-outline-secondary update-quantity" 
+                                                        data-item-id="{{ item.id }}" data-action="increase">+</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 text-end">
+                                        <p class="h5">${{ item.total_price }}</p>
+                                        <button class="btn btn-danger btn-sm remove-item" data-item-id="{{ item.id }}">
+                                            <i class="fas fa-trash"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <h4>Your cart is empty</h4>
+                        <a href="{% url 'core:home' %}" class="btn btn-primary mt-3">Browse Restaurants</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h4>Order Summary</h4>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <span>Subtotal</span>
+                    <span>${{ cart.total|default:"0.00" }}</span>
+                </div>
+                <div class="d-grid">
+                    <button class="btn btn-primary{% if not cart or not cart.items.exists %} disabled{% endif %}">
+                        Proceed to Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.update-quantity').forEach(button => {
+    button.addEventListener('click', function() {
+        const itemId = this.dataset.itemId;
+        const action = this.dataset.action;
+        const quantityInput = this.closest('.input-group').querySelector('.item-quantity');
+
+        fetch(`/update-cart/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ action: action })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                quantityInput.value = data.new_quantity;
+                location.reload();
+            } else {
+                alert(data.error || 'An error occurred.');
+            }
+        });
+    });
+});
+
+document.querySelectorAll('.remove-item').forEach(button => {
+    button.addEventListener('click', function() {
+        const itemId = this.dataset.itemId;
+
+        fetch(`/remove-item/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || 'An error occurred.');
+            }
+        });
+    });
+});
+</script>
+{% endblock %} -->
+
+
+
+
+{% extends 'customer/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Checkout</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Timeline -->
+    <div class="d-flex justify-content-between mb-4">
+        <div class="step completed">Cart</div>
+        <div class="step active">Checkout</div>
+        <div class="step">Payment</div>
+        <div class="step">Confirmation</div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Order Type -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Order Type</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ form.order_type }}
+                    </div>
+                </div>
+
+                <!-- Delivery Address -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Delivery Address</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            {% for address in addresses %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="address" id="address{{ address.id }}" value="{{ address.id }}" {% if forloop.first %}checked{% endif %}>
+                                    <label class="form-check-label" for="address{{ address.id }}">
+                                        {{ address.street }}, {{ address.city }}, {{ address.state }}<br>
+                                        PIN: {{ address.postal_code }}<br>
+                                        {{ address.phone_number }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <a href="{% url 'add_address' %}" class="btn btn-outline-primary">+ Add New Address</a>
+                    </div>
+                </div>
+
+                <!-- Payment Method -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Payment Method</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ form.payment_method }}
+                    </div>
+                </div>
+
+                <!-- Order Items -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Order Items</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group">
+                            {% for item in cart.items.all %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ item.food_item.name }} (Quantity: {{ item.quantity }})
+                                    <span>${{ item.total_price }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Order Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <tbody>
+                                    <tr>
+                                        <td>Subtotal</td>
+                                        <td class="text-end">${{ cart.total }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Delivery Charge</td>
+                                        <td class="text-end">$0</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td><strong>Total</strong></td>
+                                        <td class="text-end"><strong>${{ cart.total }}</strong></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100 mt-3">Place Order</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const orderTypeSelect = document.querySelector('select[name="order_type"]');
+    const deliveryAddressSection = document.querySelector('.card-body');
+    const paymentMethodSelect = document.querySelector('select[name="payment_method"]');
+
+    function updateFormFields() {
+        const isDelivery = orderTypeSelect.value === 'delivery';
+        
+        // Show/hide delivery address section
+        if (deliveryAddressSection) {
+            deliveryAddressSection.style.display = isDelivery ? 'block' : 'none';
+        }
+
+        // Update payment method options
+        if (paymentMethodSelect) {
+            const codOption = Array.from(paymentMethodSelect.options).find(option => option.value === 'cod');
+            if (codOption) {
+                codOption.disabled = !isDelivery;
+                if (!isDelivery && paymentMethodSelect.value === 'cod') {
+                    paymentMethodSelect.value = 'prepaid';
+                }
+            }
+        }
+    }
+
+    if (orderTypeSelect) {
+        orderTypeSelect.addEventListener('change', updateFormFields);
+        updateFormFields(); // Initial setup
+    }
+});
+</script>
+{% endblock %}

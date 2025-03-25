@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .reviews-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .review-card {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        padding: 15px;
+    }
+
+    .rating {
+        color: #FFD700;
+        font-size: 20px;
+    }
+
+    .filled-star {
+        color: #FFD700;
+    }
+
+    .empty-star {
+        color: #ccc;
+    }
+
+    .review-meta {
+        color: #666;
+        font-size: 0.9em;
+        margin-bottom: 10px;
+    }
+
+    .average-rating {
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .review-comment {
+        margin-top: 10px;
+        line-height: 1.5;
+    }
+</style>
+
+<div class="reviews-container">
+    <h2>Restaurant Reviews</h2>
+
+    <div class="average-rating">
+        <h3>Overall Rating</h3>
+        <div class="rating">
+            {% with ''|center:5 as range %}
+            {% for _ in range %}
+                {% if forloop.counter <= restaurant.average_rating|floatformat:"0" %}
+                    <span class="filled-star">★</span>
+                {% else %}
+                    <span class="empty-star">☆</span>
+                {% endif %}
+            {% endfor %}
+            {% endwith %}
+        </div>
+        <p>{{ restaurant.average_rating|floatformat:1 }} out of 5</p>
+    </div>
+
+    {% if reviews %}
+        {% for review in reviews %}
+        <div class="review-card">
+            <div class="review-meta">
+                <strong>Order #{{ review.order.id }}</strong> | 
+                Customer: {{ review.user.username }} |
+                Date: {{ review.created_at|date:"M d, Y" }}
+            </div>
+            <div class="rating">
+                {% with ''|center:5 as range %}
+                {% for _ in range %}
+                    {% if forloop.counter <= review.rating %}
+                        <span class="filled-star">★</span>
+                    {% else %}
+                        <span class="empty-star">☆</span>
+                    {% endif %}
+                {% endfor %}
+                {% endwith %}
+            </div>
+            <div class="review-comment">
+                {{ review.comment }}
+            </div>
+            <div class="order-details">
+                <h4>Order Items:</h4>
+                <ul>
+                {% for item in review.order.items.all %}
+                    <li>{{ item.food_item.name }} (Quantity: {{ item.quantity }})</li>
+                {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>No reviews yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

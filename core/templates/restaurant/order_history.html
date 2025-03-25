@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Order History</h2>
+        <h4 class="text-success">Total Earnings: ${{ total_earnings }}</h4>
+    </div>
+
+    <!-- Filter Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Date</label>
+                    <input type="date" name="date" class="form-control" value="{{ date|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Time</label>
+                    <input type="time" name="time" class="form-control" value="{{ time|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Order Type</label>
+                    <select name="order_type" class="form-select">
+                        <option value="">All</option>
+                        <option value="pickup" {% if order_type == 'pickup' %}selected{% endif %}>Pickup</option>
+                        <option value="delivery" {% if order_type == 'delivery' %}selected{% endif %}>Delivery</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="btn-group w-100">
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                        <a href="{% url 'restaurant_order_history' %}" class="btn btn-secondary">Clear</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Orders List -->
+    <div class="orders-list">
+        {% for order in orders %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <h5 class="card-title">Order #{{ order.id }}</h5>
+                            <p class="text-muted mb-0">{{ order.created_at|date:"M d, Y" }}</p>
+                            <p class="text-muted">{{ order.created_at|time:"H:i" }}</p>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="order-details">
+                                <p><strong>Customer:</strong> {{ order.customer.username }}</p>
+                                <p><strong>Order Type:</strong> {{ order.get_order_type_display }}</p>
+                                {% if order.order_type == 'delivery' %}
+                                    <p><strong>Delivery Address:</strong> {{ order.delivery_address }}</p>
+                                    <p><strong>Delivery Personnel:</strong> 
+                                        {{ order.delivery_personnel.user.username|default:"Not Assigned" }}
+                                    </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="order-summary text-end">
+                                <h4 class="text-success">${{ order.total_price }}</h4>
+                                <span class="badge bg-success">Completed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="alert alert-info">No completed orders found.</div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.order-details {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+.badge {
+    padding: 0.5em 0.75em;
+    font-size: 0.9em;
+}
+
+.order-summary {
+    padding: 15px;
+}
+
+.form-label {
+    font-weight: 500;
+}
+
+.btn-group {
+    gap: 5px;
+}
+
+@media (max-width: 768px) {
+    .order-summary {
+        text-align: left;
+        margin-top: 15px;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Delivery Dashboard - QuickByte{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Stats Cards -->
+    <div class="col-md-4 mb-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h5 class="card-title">Active Deliveries</h5>
+                <h2 class="card-text">{{ active_deliveries.count }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h5 class="card-title">Total Earnings</h5>
+                <h2 class="card-text">₹{{ earnings }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <h5 class="card-title">Completed Deliveries</h5>
+                <h2 class="card-text">{{ completed_deliveries.count }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Deliveries -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h4 class="mb-0">Active Deliveries</h4>
+    </div>
+    <div class="card-body">
+        {% if active_deliveries %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Restaurant</th>
+                            <th>Customer</th>
+                            <th>Delivery Address</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in active_deliveries %}
+                            <tr>
+                                <td>#{{ order.id }}</td>
+                                <td>{{ order.restaurant.name }}</td>
+                                <td>{{ order.customer.username }}</td>
+                                <td>{{ order.delivery_address.street }}, {{ order.delivery_address.city }}</td>
+                                <td>{{ order.get_status_display }}</td>
+                                <td>
+                                    <button class="btn btn-success btn-sm complete-delivery" 
+                                            data-order-id="{{ order.id }}">
+                                        Mark as Delivered
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-center py-3">No active deliveries</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Completed Deliveries -->
+<div class="card">
+    <div class="card-header">
+        <h4 class="mb-0">Recent Completed Deliveries</h4>
+    </div>
+    <div class="card-body">
+        {% if completed_deliveries %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Restaurant</th>
+                            <th>Customer</th>
+                            <th>Delivery Time</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in completed_deliveries %}
+                            <tr>
+                                <td>#{{ order.id }}</td>
+                                <td>{{ order.restaurant.name }}</td>
+                                <td>{{ order.customer.username }}</td>
+                                <td>{{ order.updated_at|timesince }} ago</td>
+                                <td>
+                                    <span class="badge bg-success">{{ order.get_status_display }}</span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-center py-3">No completed deliveries</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('.complete-delivery').click(function() {
+        if (confirm('Mark this order as delivered?')) {
+            var orderId = $(this).data('order-id');
+            
+            $.ajax({
+                url: '{% url "delivery_orders" %}',
+                type: 'POST',
+                data: {
+                    'order_id': orderId,
+                    'action': 'complete',
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        location.reload();
+                    }
+                },
+                error: function() {
+                    alert('Error updating delivery status');
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

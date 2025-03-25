@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}Order #{{ order.id }} - QuickByte{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4 class="mb-0">Order Details</h4>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h5>Order Information</h5>
+                        <p><strong>Order ID:</strong> #{{ order.id }}</p>
+                        <p><strong>Order Date:</strong> {{ order.created_at|date:"F j, Y, g:i a" }}</p>
+                        <p><strong>Status:</strong> 
+                            <span class="badge {% if order.status == 'delivered' %}bg-success
+                                           {% elif order.status == 'canceled' %}bg-danger
+                                           {% else %}bg-warning{% endif %}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </p>
+                        <p><strong>Order Type:</strong> {{ order.get_order_type_display }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Restaurant</h5>
+                        <p><strong>Name:</strong> {{ order.restaurant.name }}</p>
+                        <p><strong>Phone:</strong> {{ order.restaurant.phone_number }}</p>
+                        <p><strong>Address:</strong><br>
+                            {{ order.restaurant.address.street }}<br>
+                            {{ order.restaurant.address.city }}, {{ order.restaurant.address.state }}<br>
+                            {{ order.restaurant.address.postal_code }}
+                        </p>
+                    </div>
+                </div>
+
+                <h5>Order Items</h5>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.items.all %}
+                                <tr>
+                                    <td>
+                                        {{ item.food_item.name }}
+                                        {% if item.food_item.food_type %}
+                                            <span class="badge {% if item.food_item.food_type == 'veg' %}bg-success{% else %}bg-danger{% endif %}">
+                                                {{ item.food_item.get_food_type_display }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>₹{{ item.food_item.price }}</td>
+                                    <td>₹{{ item.total_price }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
+                                <td>₹{{ order.total_price }}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Delivery Fee:</strong></td>
+                                <td>₹40</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                <td><strong>₹{{ order.total_price|add:40 }}</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Delivery Information -->
+        {% if order.order_type == 'delivery' %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4 class="mb-0">Delivery Information</h4>
+                </div>
+                <div class="card-body">
+                    {% if order.delivery_personnel %}
+                        <h5>Delivery Partner</h5>
+                        <p><strong>Name:</strong> {{ order.delivery_personnel.user.get_full_name }}</p>
+                        <p><strong>Phone:</strong> {{ order.delivery_personnel.user.phone_number }}</p>
+                    {% endif %}
+
+                    <h5>Delivery Address</h5>
+                    <p>
+                        {{ order.delivery_address.street }}<br>
+                        {{ order.delivery_address.city }}, {{ order.delivery_address.state }}<br>
+                        {{ order.delivery_address.postal_code }}
+                    </p>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Customer Information -->
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Customer Information</h4>
+            </div>
+            <div class="card-body">
+                <p><strong>Name:</strong> {{ order.customer.get_full_name }}</p>
+                <p><strong>Email:</strong> {{ order.customer.email }}</p>
+                <p><strong>Phone:</strong> {{ order.customer.phone_number }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if user.role == 'customer' and order.status == 'delivered' and not order.review_set.exists %}
+    <!-- Review Form -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h4 class="mb-0">Write a Review</h4>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{% url 'submit_review' order.id %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Rating</label>
+                    <select name="rating" class="form-select" required>
+                        <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+                        <option value="4">⭐⭐⭐⭐ Very Good</option>
+                        <option value="3">⭐⭐⭐ Good</option>
+                        <option value="2">⭐⭐ Fair</option>
+                        <option value="1">⭐ Poor</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Comment</label>
+                    <textarea name="comment" class="form-control" rows="3" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit Review</button>
+            </form>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

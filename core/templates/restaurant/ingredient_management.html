@@ -1,0 +1,92 @@
+{% extends 'restaurant/base.html' %}
+{% block content %}
+
+<div class="container custom-margin-top">
+
+    <!-- Display messages -->
+    {% if messages %}
+        <div class="container mt-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
+    <div class="container mt-5">
+        <h3>Add Ingredient</h3>
+        <form method="post">
+            {% csrf_token %}
+            {% for field in ingredient_form %}
+                <div class="mb-3">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <div class="text-danger">
+                            {{ field.errors|striptags }}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <button type="submit" name="add_ingredient" class="btn btn-primary">Add Ingredient</button>
+        </form>
+
+        <!-- Ingredients List -->
+        <h3 class="mt-5">Current Ingredients</h3>
+        <ul class="list-group">
+            {% for ingredient in ingredients %}
+                <li class="list-group-item">
+                    <strong>{{ ingredient.name }}</strong>
+                    <a href="{% url 'edit_ingredient' ingredient.id %}" class="btn btn-warning btn-sm">Edit</a>
+                    <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ ingredient.id }}">
+                        Delete
+                    </button>
+
+                    <!-- Delete Modal -->
+                    <div class="modal fade" id="deleteModal{{ ingredient.id }}" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    Are you sure you want to delete the ingredient "{{ ingredient.name }}"?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <form method="post" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="ingredient_id" value="{{ ingredient.id }}">
+                                        <button type="submit" name="delete_ingredient" class="btn btn-danger">Delete</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<!-- Include Bootstrap JS and CSS -->
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+
+<!-- Custom CSS -->
+<style>
+    .custom-margin-top {
+        margin-top: 150px; /* Increase this value for more space */
+    }
+    
+    @media only screen and (max-width: 768px) {
+        .custom-margin-top {
+            margin-top: 150px; /* Adjust for smaller screens */
+        }
+    }
+</style>
+
+{% endblock %}

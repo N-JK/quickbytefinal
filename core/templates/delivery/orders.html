@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}Delivery Orders - QuickByte{% endblock %}
+
+{% block content %}
+<!-- Available Orders -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h4 class="mb-0">Available Orders</h4>
+    </div>
+    <div class="card-body">
+        {% if available_orders %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Restaurant</th>
+                            <th>Customer</th>
+                            <th>Delivery Address</th>
+                            <th>Order Total</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in available_orders %}
+                            <tr>
+                                <td>#{{ order.id }}</td>
+                                <td>{{ order.restaurant.name }}</td>
+                                <td>{{ order.customer.username }}</td>
+                                <td>{{ order.delivery_address.street }}, {{ order.delivery_address.city }}</td>
+                                <td>₹{{ order.total_price }}</td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm accept-order" 
+                                            data-order-id="{{ order.id }}">
+                                        Accept Order
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-center py-3">No orders available for delivery</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Active Deliveries -->
+<div class="card">
+    <div class="card-header">
+        <h4 class="mb-0">Your Active Deliveries</h4>
+    </div>
+    <div class="card-body">
+        {% if active_deliveries %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Restaurant</th>
+                            <th>Customer</th>
+                            <th>Delivery Address</th>
+                            <th>Order Details</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in active_deliveries %}
+                            <tr>
+                                <td>#{{ order.id }}</td>
+                                <td>
+                                    {{ order.restaurant.name }}<br>
+                                    <small class="text-muted">{{ order.restaurant.address.street }}</small>
+                                </td>
+                                <td>{{ order.customer.username }}</td>
+                                <td>
+                                    {{ order.delivery_address.street }}<br>
+                                    {{ order.delivery_address.city }}, {{ order.delivery_address.postal_code }}
+                                </td>
+                                <td>
+                                    {% for item in order.items.all %}
+                                        {{ item.quantity }}x {{ item.food_item.name }}<br>
+                                    {% endfor %}
+                                    <strong>Total: ₹{{ order.total_price }}</strong>
+                                </td>
+                                <td>
+                                    <button class="btn btn-success btn-sm complete-delivery" 
+                                            data-order-id="{{ order.id }}">
+                                        Mark as Delivered
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-center py-3">No active deliveries</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('.accept-order').click(function() {
+        if (confirm('Accept this order for delivery?')) {
+            var orderId = $(this).data('order-id');
+            
+            $.ajax({
+                url: '{% url "delivery_orders" %}',
+                type: 'POST',
+                data: {
+                    'order_id': orderId,
+                    'action': 'accept',
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        location.reload();
+                    }
+                },
+                error: function() {
+                    alert('Error accepting order');
+                }
+            });
+        }
+    });
+
+    $('.complete-delivery').click(function() {
+        if (confirm('Mark this order as delivered?')) {
+            var orderId = $(this).data('order-id');
+            
+            $.ajax({
+                url: '{% url "delivery_orders" %}',
+                type: 'POST',
+                data: {
+                    'order_id': orderId,
+                    'action': 'complete',
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        location.reload();
+                    }
+                },
+                error: function() {
+                    alert('Error updating delivery status');
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

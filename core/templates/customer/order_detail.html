@@ -1,0 +1,258 @@
+{% extends 'customer/base.html' %}
+
+{% block content %}
+<div class="page-wrapper">
+    <!-- Notification spacer -->
+    <div class="notification-spacer"></div>
+
+    <!-- Main content -->
+    <div class="container mt-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2>Order #{{ order.id }}</h2>
+                <div class="status-badge">
+                    <span class="badge 
+                        {% if order.status == 'completed' %}bg-success
+                        {% elif order.status == 'canceled' %}bg-danger
+                        {% elif order.status == 'preparing' %}bg-warning
+                        {% elif order.status == 'out_for_delivery' %}bg-info
+                        {% elif order.status == 'ready_for_pickup' %}bg-primary
+                        {% else %}bg-secondary{% endif %}">
+                        {{ order.get_status_display }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <!-- Restaurant Information -->
+                <div class="section mb-4">
+                    <h4>Restaurant Information</h4>
+                    <div class="info-box">
+                        <p><strong>Name:</strong> {{ order.restaurant.name }}</p>
+                        <p><strong>Address:</strong> {{ order.restaurant.street }}, {{ order.restaurant.city }}</p>
+                        <p><strong>Phone:</strong> {{ order.restaurant.phone_number }}</p>
+                    </div>
+                </div>
+
+                <!-- Order Details -->
+                <div class="section mb-4">
+                    <h4>Order Details</h4>
+                    <div class="info-box">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Order Type:</strong> {{ order.get_order_type_display }}</p>
+                                <p><strong>Order Date:</strong> {{ order.created_at|date:"F d, Y H:i" }}</p>
+                                <p><strong>Payment Method:</strong> {{ order.get_payment_method_display }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Payment Status:</strong> {{ order.get_payment_status_display }}</p>
+                                {% if order.order_type == 'delivery' %}
+                                    <p><strong>Delivery Address:</strong> {{ order.delivery_address }}</p>
+                                {% endif %}
+                                <p><strong>Last Updated:</strong> {{ order.updated_at|date:"F d, Y H:i" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Items -->
+                <div class="section mb-4">
+                    <h4>Order Items</h4>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Type</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order_items %}
+                                    <tr>
+                                        <td>{{ item.food_item.name }}</td>
+                                        <td>
+                                            <span class="badge {% if item.food_item.food_type == 'veg' %}bg-success{% else %}bg-danger{% endif %}">
+                                                {{ item.food_item.get_food_type_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td>${{ item.food_item.price }}</td>
+                                        <td>${{ item.total_price }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <td colspan="4" class="text-end"><strong>Total Amount:</strong></td>
+                                    <td><strong>${{ order.total_price }}</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Order Timeline -->
+                <div class="section">
+                    <h4>Order Timeline</h4>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-badge bg-success">✓</div>
+                            <div class="timeline-content">
+                                <h6>Order Placed</h6>
+                                <small>{{ order.created_at|date:"F d, Y H:i" }}</small>
+                            </div>
+                        </div>
+
+                        {% if order.status != 'pending' and order.status != 'canceled' %}
+                            <div class="timeline-item">
+                                <div class="timeline-badge {% if order.status == 'preparing' %}bg-warning{% else %}bg-success{% endif %}">
+                                    {% if order.status == 'preparing' %}⋯{% else %}✓{% endif %}
+                                </div>
+                                <div class="timeline-content">
+                                    <h6>Preparing</h6>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        {% if order.order_type == 'delivery' and order.status in 'out_for_delivery,delivered,completed' %}
+                            <div class="timeline-item">
+                                <div class="timeline-badge {% if order.status == 'out_for_delivery' %}bg-warning{% else %}bg-success{% endif %}">
+                                    {% if order.status == 'out_for_delivery' %}⋯{% else %}✓{% endif %}
+                                </div>
+                                <div class="timeline-content">
+                                    <h6>Out for Delivery</h6>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        {% if order.order_type == 'pickup' and order.status in 'ready_for_pickup,completed' %}
+                            <div class="timeline-item">
+                                <div class="timeline-badge {% if order.status == 'ready_for_pickup' %}bg-warning{% else %}bg-success{% endif %}">
+                                    {% if order.status == 'ready_for_pickup' %}⋯{% else %}✓{% endif %}
+                                </div>
+                                <div class="timeline-content">
+                                    <h6>Ready for Pickup</h6>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        {% if order.status == 'completed' %}
+                            <div class="timeline-item">
+                                <div class="timeline-badge bg-success">✓</div>
+                                <div class="timeline-content">
+                                    <h6>Completed</h6>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        {% if order.status == 'canceled' %}
+                            <div class="timeline-item">
+                                <div class="timeline-badge bg-danger">✕</div>
+                                <div class="timeline-content">
+                                    <h6>Canceled</h6>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if can_submit_review %}
+                    <div class="text-center mt-4">
+                        <a href="{% url 'submit_review' order_id=order.id %}" class="btn btn-primary">Submit Review</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.page-wrapper {
+    padding-top: 60px;
+    min-height: 100vh;
+    background-color: #f8f9fa;
+}
+
+.notification-spacer {
+    height: 20px;
+}
+
+.section {
+    padding: 20px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.section h4 {
+    margin-bottom: 15px;
+    color: #333;
+    font-weight: 600;
+}
+
+.info-box {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #e9ecef;
+}
+
+.timeline {
+    position: relative;
+    padding: 20px 0;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+    padding-left: 40px;
+}
+
+.timeline-badge {
+    position: absolute;
+    left: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    text-align: center;
+    color: white;
+    line-height: 30px;
+}
+
+.timeline-content {
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.badge {
+    padding: 5px 10px;
+    font-weight: 500;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .page-wrapper {
+        padding-top: 40px;
+    }
+}
+</style>
+{% endblock %}

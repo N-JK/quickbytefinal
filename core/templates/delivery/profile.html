@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Profile Summary Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    {% if delivery_personnel.photograph %}
+                        <img src="{{ delivery_personnel.photograph.url }}" 
+                             alt="Profile Photo" 
+                             class="rounded-circle mb-3"
+                             style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <div class="default-avatar mb-3">
+                            <i class="fas fa-user-circle fa-6x"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <h4>{{ delivery_personnel.user.get_full_name|default:delivery_personnel.user.username }}</h4>
+                    <p class="text-muted">Delivery Personnel</p>
+                    
+                    <div class="availability-status mb-3">
+                        <span class="badge {% if is_available %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ is_available|yesno:"Available,Not Available" }}
+                        </span>
+                    </div>
+
+                    <form method="post" action="{% url 'toggle_availability' %}" class="mb-3">
+                        {% csrf_token %}
+                        <button type="submit" 
+                                class="btn {% if is_available %}btn-danger{% else %}btn-success{% endif %} btn-sm">
+                            {{ is_available|yesno:"Go Offline,Go Online" }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Earnings Summary -->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">Earnings Summary</h5>
+                    <div class="row">
+                        <div class="col-6">
+                            <p class="mb-1">Today</p>
+                            <h4 class="text-success">${{ today_earnings }}</h4>
+                        </div>
+                        <div class="col-6">
+                            <p class="mb-1">This Month</p>
+                            <h4 class="text-primary">${{ monthly_earnings }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Edit Form -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Edit Profile</h5>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        {% for field in form %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">
+                                    {{ field.label }}
+                                </label>
+                                {{ field }}
+                                {% if field.errors %}
+                                    <div class="text-danger">
+                                        {{ field.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                                {% if field.help_text %}
+                                    <div class="form-text">{{ field.help_text }}</div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+
+                        <button type="submit" class="btn btn-primary">
+                            Update Profile
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Recent Deliveries -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Deliveries</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_deliveries %}
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Date</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for delivery in recent_deliveries %}
+                                        <tr>
+                                            <td>#{{ delivery.id }}</td>
+                                            <td>{{ delivery.created_at|date:"M d, Y" }}</td>
+                                            <td>${{ delivery.total_price }}</td>
+                                            <td>
+                                                <span class="badge bg-success">
+                                                    {{ delivery.get_status_display }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No recent deliveries.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 1rem;
+}
+
+.default-avatar {
+    color: #6c757d;
+}
+
+.badge {
+    padding: 0.5em 0.75em;
+    font-size: 0.9em;
+}
+
+.table th {
+    font-weight: 500;
+}
+
+.availability-status .badge {
+    font-size: 1em;
+    padding: 0.5em 1em;
+}
+</style>
+{% endblock %}

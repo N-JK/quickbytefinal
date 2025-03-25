@@ -1,0 +1,689 @@
+{% extends 'customer/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    /* Professional Toast Notifications */
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1100;
+    }
+
+    .toast {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        color: white;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+        min-width: 250px;
+        position: relative;
+        margin-bottom: 10px;
+    }
+
+    .toast.show {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .toast-success {
+        background-color: #28a745;
+    }
+
+    .toast-error {
+        background-color: #dc3545;
+    }
+
+    .toast-warning {
+        background-color: #ffc107;
+        color: #212529;
+    }
+
+    .toast-info {
+        background-color: #17a2b8;
+    }
+
+    .toast-progress {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 4px;
+        background-color: rgba(255,255,255,0.7);
+        width: 100%;
+        transform-origin: left;
+        animation: toast-progress 3s linear forwards;
+    }
+
+    @keyframes toast-progress {
+        0% { transform: scaleX(1); }
+        100% { transform: scaleX(0); }
+    }
+
+    .toast-icon {
+        margin-right: 12px;
+        font-size: 1.2rem;
+    }
+
+    .toast-close {
+        margin-left: auto;
+        background: none;
+        border: none;
+        color: white;
+        cursor: pointer;
+        font-size: 1rem;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+    }
+
+    .toast-close:hover {
+        opacity: 1;
+    }
+
+    /* Checkout Steps */
+    .checkout-steps {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+        position: relative;
+    }
+
+    .checkout-steps::before {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: #e9ecef;
+        z-index: 1;
+    }
+
+    .step {
+        position: relative;
+        z-index: 2;
+        background: white;
+        text-align: center;
+        padding: 0 15px;
+    }
+
+    .step-number {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #e9ecef;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 10px;
+        font-weight: bold;
+        transition: all 0.3s;
+    }
+
+    .step.active .step-number {
+        background: #198754;
+        color: white;
+    }
+
+    .step.completed .step-number {
+        background: #28a745;
+        color: white;
+    }
+
+    .step-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .step.active .step-label {
+        color: #198754;
+        font-weight: bold;
+    }
+
+    /* Address Cards */
+    .address-card {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        transition: all 0.3s;
+        cursor: pointer;
+        height: 100%;
+    }
+
+    .address-card:hover {
+        border-color: #198754;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .address-card.selected {
+        border-color: #198754;
+        background-color: #f8f9fa;
+    }
+
+    .address-card .form-check {
+        padding: 1rem;
+    }
+
+    .address-card .form-check-input {
+        margin-top: 0.25rem;
+    }
+
+    /* Payment Methods */
+    .payment-method {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .payment-method:hover {
+        border-color: #198754;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .payment-method.selected {
+        border-color: #198754;
+        background-color: #f8f9fa;
+    }
+
+    .payment-method-icon {
+        font-size: 1.5rem;
+        margin-right: 0.5rem;
+        color: #198754;
+    }
+
+    /* Order Summary */
+    .order-summary {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+    }
+
+    .order-summary-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .order-summary-item:last-child {
+        border-bottom: none;
+    }
+
+    .item-image {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 5px;
+        margin-right: 1rem;
+    }
+
+    .item-details {
+        flex-grow: 1;
+    }
+
+    .item-price {
+        font-weight: bold;
+        color: #198754;
+    }
+
+    /* Total Section */
+    .total-section {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 1.5rem;
+    }
+
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        color: #6c757d;
+    }
+
+    .total-row.final {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 2px solid #e9ecef;
+        font-size: 1.2rem;
+        color: #212529;
+        font-weight: bold;
+    }
+
+    /* Buttons */
+    .btn-checkout {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        width: 100%;
+        margin-top: 1rem;
+    }
+
+    .btn-checkout i {
+        margin-right: 0.5rem;
+    }
+
+    /* Loading State */
+    .btn-checkout.loading {
+        position: relative;
+        color: transparent;
+    }
+
+    .btn-checkout.loading::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        top: 50%;
+        left: 50%;
+        margin: -10px 0 0 -10px;
+        border: 3px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Hidden messages for toast conversion -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="d-none alert-message" 
+                 data-message="{{ message }}" 
+                 data-type="{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Checkout Steps -->
+    <div class="checkout-steps mb-4">
+        <div class="step completed">
+            <div class="step-number">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="step-label">Cart</div>
+        </div>
+        <div class="step active">
+            <div class="step-number">2</div>
+            <div class="step-label">Checkout</div>
+        </div>
+        <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-label">Payment</div>
+        </div>
+        <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-label">Confirmation</div>
+        </div>
+    </div>
+
+    <form id="checkout-form" method="post">
+        {% csrf_token %}
+        <div class="row">
+            <!-- Left Column - Order Details -->
+            <div class="col-lg-8">
+                <!-- Delivery Address Section -->
+                <div class="card mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-map-marker-alt text-success me-2"></i>
+                            Delivery Address
+                        </h5>
+                        <a href="{% url 'add_address' %}" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-plus me-1"></i>Add New Address
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        {% if addresses %}
+                            <div class="row">
+                                {% for address in addresses %}
+                                    <div class="col-md-6 mb-3">
+                                        <div class="address-card">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="address" 
+                                                       value="{{ address.id }}" id="address_{{ address.id }}" 
+                                                       {% if forloop.first %}checked{% endif %}>
+                                                <label class="form-check-label" for="address_{{ address.id }}">
+                                                    <strong class="d-block mb-2">{{ address.street }}</strong>
+                                                    <p class="mb-1">{{ address.city }}, {{ address.state }}</p>
+                                                    <p class="mb-1">PIN: {{ address.postal_code }}</p>
+                                                    <p class="mb-0 text-success">
+                                                        <i class="fas fa-phone-alt me-1"></i>
+                                                        {{ address.phone_number }}
+                                                    </p>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning mb-0">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Please add a delivery address to continue with checkout.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">
+                            <i class="fas fa-truck text-success me-2"></i>
+                            Order Type
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="order-type-card" data-type="pickup">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="order_type" 
+                                               value="pickup" id="order_type_pickup" required>
+                                        <label class="form-check-label" for="order_type_pickup">
+                                            <strong>Pickup</strong>
+                                            <p class="text-muted mb-0">Collect your order from the restaurant</p>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="order-type-card" data-type="delivery">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="order_type" 
+                                               value="delivery" id="order_type_delivery" required checked>
+                                        <label class="form-check-label" for="order_type_delivery">
+                                            <strong>Home Delivery</strong>
+                                            <p class="text-muted mb-0">Get your order delivered to your address</p>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Method Section -->
+                <div class="card mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">
+                            <i class="fas fa-credit-card text-success me-2"></i>
+                            Payment Method
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="payment-method selected">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="payment_method" 
+                                       value="cod" id="payment_cod" checked>
+                                <label class="form-check-label w-100" for="payment_cod">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-money-bill payment-method-icon"></i>
+                                        <div>
+                                            <strong>Cash on Delivery (COD)</strong>
+                                            <p class="text-muted mb-0">Pay when your order arrives</p>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="payment-method">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="payment_method" 
+                                       value="razorpay" id="payment_razorpay">
+                                <label class="form-check-label w-100" for="payment_razorpay">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-credit-card payment-method-icon"></i>
+                                        <div>
+                                            <strong>Pay Online (Razorpay)</strong>
+                                            <p class="text-muted mb-0">Credit/Debit Card, UPI, Net Banking</p>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Items -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">
+                            <i class="fas fa-shopping-basket text-success me-2"></i>
+                            Order Items
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% for item in cart.items.all %}
+                            <div class="order-summary-item">
+                                <img src="{{ item.food_item.image.url }}" alt="{{ item.food_item.name }}" class="item-image">
+                                <div class="item-details">
+                                    <h6 class="mb-1">{{ item.food_item.name }}</h6>
+                                    <p class="text-muted mb-0">Quantity: {{ item.quantity }}</p>
+                                </div>
+                                <div class="item-price">₹{{ item.total_price }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="total-section sticky-top" style="top: 20px;">
+                    <h5 class="mb-4">Order Summary</h5>
+                    <div class="total-row">
+                        <span>Subtotal</span>
+                        <span>₹{{ cart.total }}</span>
+                    </div>
+                    <div class="total-row">
+                        <span>Delivery Charge</span>
+                        <span>₹0</span>
+                    </div>
+                    <div class="total-row final">
+                        <span>Total</span>
+                        <span>₹{{ cart.total }}</span>
+                    </div>
+                    <button type="submit" class="btn btn-success btn-checkout" 
+                            {% if not addresses %}disabled{% endif %}>
+                        <i class="fas fa-lock"></i>
+                        Place Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+<script>
+// Toast notification function
+function showToast(message, type = 'info') {
+    const toastContainer = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type} show`;
+    
+    const iconMap = {
+        'success': 'fa-check-circle',
+        'error': 'fa-times-circle',
+        'warning': 'fa-exclamation-triangle',
+        'info': 'fa-info-circle'
+    };
+    const icon = iconMap[type] || 'fa-info-circle';
+
+    toast.innerHTML = `
+        <i class="fas ${icon} toast-icon"></i>
+        <span>${message}</span>
+        <button class="toast-close" onclick="this.parentElement.remove()">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="toast-progress"></div>
+    `;
+
+    toastContainer.appendChild(toast);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Show any Django messages as toasts
+    const alertMessages = document.querySelectorAll('.alert-message');
+    alertMessages.forEach(message => {
+        const text = message.textContent.trim();
+        const type = message.getAttribute('data-type') || 'info';
+        showToast(text, type);
+    });
+
+    const checkoutForm = document.getElementById('checkout-form');
+    const addressCards = document.querySelectorAll('.address-card');
+    const paymentMethods = document.querySelectorAll('.payment-method');
+    const orderTypeCards = document.querySelectorAll('.order-type-card');
+    const submitButton = document.querySelector('.btn-checkout');
+    
+    let selectedAddressId = document.querySelector('input[name="address"]:checked')?.value;
+    let selectedPaymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value || 'cod';
+    let selectedOrderType = document.querySelector('input[name="order_type"]:checked')?.value || 'delivery';
+
+    // Handle address selection
+    addressCards.forEach(card => {
+        const radio = card.querySelector('input[type="radio"]');
+        card.addEventListener('click', () => {
+            addressCards.forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            radio.checked = true;
+            selectedAddressId = radio.value;
+            updateButton();
+        });
+    });
+
+    // Handle payment method selection
+    paymentMethods.forEach(method => {
+        const radio = method.querySelector('input[type="radio"]');
+        method.addEventListener('click', () => {
+            paymentMethods.forEach(m => m.classList.remove('selected'));
+            method.classList.add('selected');
+            radio.checked = true;
+            selectedPaymentMethod = radio.value;
+            updateButton();
+        });
+    });
+
+    // Handle order type selection
+    orderTypeCards.forEach(card => {
+        card.addEventListener('click', () => {
+            selectedOrderType = card.dataset.type;
+            document.querySelector(`#order_type_${selectedOrderType}`).checked = true;
+            updatePaymentMethods();
+            updateButton();
+        });
+    });
+
+    function updatePaymentMethods() {
+        const codOption = document.querySelector('#payment_cod').closest('.payment-method');
+        const razorpayOption = document.querySelector('#payment_razorpay').closest('.payment-method');
+        
+        if (selectedOrderType === 'pickup') {
+            codOption.style.display = 'none';
+            razorpayOption.style.display = 'block';
+            document.querySelector('#payment_razorpay').checked = true;
+            selectedPaymentMethod = 'razorpay';
+        } else {
+            codOption.style.display = 'block';
+            razorpayOption.style.display = 'block';
+        }
+    }
+
+    function updateButton() {
+        const isValid = selectedAddressId && selectedPaymentMethod && selectedOrderType;
+        submitButton.disabled = !isValid;
+        
+        if (isValid) {
+            const isPrepaid = selectedPaymentMethod === 'razorpay';
+            submitButton.innerHTML = `
+                <i class="fas ${isPrepaid ? 'fa-credit-card' : 'fa-money-bill'}"></i>
+                ${isPrepaid ? 'Proceed to Payment' : 'Place Order (COD)'}
+            `;
+        }
+    }
+    
+    checkoutForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        if (!selectedAddressId) {
+            showToast('Please select a delivery address!', 'error');
+            return;
+        }
+        
+        if (!selectedPaymentMethod) {
+            showToast('Please select a payment method!', 'error');
+            return;
+        }
+
+        if (!selectedOrderType) {
+            showToast('Please select an order type!', 'error');
+            return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.classList.add('loading');
+
+        try {
+            const formData = new FormData();
+            formData.append('address', selectedAddressId);
+            formData.append('payment_method', selectedPaymentMethod);
+            formData.append('order_type', selectedOrderType);
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+            
+            const response = await fetch('{% url "checkout" %}', {
+                method: 'POST',
+                headers: {'X-Requested-With': 'XMLHttpRequest'},
+                body: formData
+            });
+
+            const contentType = response.headers.get('content-type');
+            if (contentType?.includes('application/json')) {
+                const result = await response.json();
+                if (result.status === 'success') {
+                    window.location.href = result.redirect_url;
+                    return;
+                }
+                throw new Error(result.message || 'Failed to create order');
+            }
+            throw new Error(await response.text());
+        } catch (error) {
+            console.error('Error:', error);
+            showToast(error.message, 'error');
+        } finally {
+            submitButton.disabled = false;
+            submitButton.classList.remove('loading');
+            updateButton();
+        }
+    });
+
+    // Initial setup
+    updatePaymentMethods();
+    updateButton();
+});
+</script>
+{% endblock %}

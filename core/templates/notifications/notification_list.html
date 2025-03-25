@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Notifications</h2>
+    <div class="notification-list">
+        {% for notification in notifications %}
+            <div class="notification-item {% if not notification.is_read %}unread{% endif %}"
+                 id="notification-{{ notification.id }}">
+                <div class="notification-header">
+                    <h5>{{ notification.title }}</h5>
+                    <small>{{ notification.created_at|timesince }} ago</small>
+                </div>
+                <p>{{ notification.message }}</p>
+                {% if notification.link %}
+                    <a href="{{ notification.link }}" class="btn btn-sm btn-primary">View Details</a>
+                {% endif %}
+                {% if not notification.is_read %}
+                    <button class="mark-read-btn btn btn-sm btn-secondary"
+                            data-notification-id="{{ notification.id }}">
+                        Mark as Read
+                    </button>
+                {% endif %}
+            </div>
+        {% empty %}
+            <p>No notifications</p>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .notification-item {
+        padding: 15px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    .notification-item.unread {
+        background-color: #f8f9fa;
+        border-left: 4px solid #007bff;
+    }
+    .notification-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+</style>
+
+<script>
+document.querySelectorAll('.mark-read-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        const notificationId = this.dataset.notificationId;
+        fetch(`/notifications/mark-read/${notificationId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const notificationElement = document.getElementById(`notification-${notificationId}`);
+                notificationElement.classList.remove('unread');
+                this.remove();
+                
+                // Update notification count in header if it exists
+                const countElement = document.getElementById('notification-count');
+                if (countElement) {
+                    const currentCount = parseInt(countElement.textContent);
+                    countElement.textContent = currentCount - 1;
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

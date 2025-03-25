@@ -1,0 +1,382 @@
+{% extends 'customer/base.html' %}
+{% load notification_filters %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">My Notifications</h2>
+            <p class="text-muted">Stay updated with your orders and promotions</p>
+        </div>
+        {% if notifications %}
+            <button class="btn btn-secondary" id="clearAllBtn">
+                <i class="fas fa-check-double me-2"></i>Mark All as Read
+            </button>
+        {% endif %}
+    </div>
+
+    <!-- Notification Type Tabs -->
+    <ul class="nav nav-tabs mb-4" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab">
+                <i class="fas fa-bell me-2"></i>All
+                <span class="badge bg-secondary ms-2">{{ notifications|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab">
+                <i class="fas fa-shopping-bag me-2"></i>Orders
+                <span class="badge bg-secondary ms-2">{{ notifications|filter_by_category:'order'|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="promotional-tab" data-bs-toggle="tab" data-bs-target="#promotional" type="button" role="tab">
+                <i class="fas fa-bullhorn me-2"></i>Promotions
+                <span class="badge bg-secondary ms-2">{{ notifications|filter_by_category:'promotional'|length }}</span>
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+        <!-- All Notifications Tab -->
+        <div class="tab-pane fade show active" id="all" role="tabpanel">
+            <div class="notification-list">
+                {% for notification in notifications %}
+                    <div class="notification-card {% if not notification.is_read %}unread{% endif %} 
+                                {% if notification.category == 'promotional' %}promotional{% endif %}"
+                         id="notification-{{ notification.id }}">
+                        <div class="notification-header">
+                            <span class="notification-type badge 
+                                {% if notification.category == 'promotional' %}
+                                    bg-success
+                                {% elif notification.notification_type == 'order_status' %}
+                                    {% if 'confirmed' in notification.message.lower %}bg-success
+                                    {% elif 'canceled' in notification.message.lower %}bg-danger
+                                    {% elif 'preparing' in notification.message.lower %}bg-warning
+                                    {% elif 'delivered' in notification.message.lower %}bg-info
+                                    {% else %}bg-primary{% endif %}
+                                {% elif notification.notification_type == 'reservation_status' %}
+                                    {% if 'confirmed' in notification.message.lower %}bg-success
+                                    {% elif 'canceled' in notification.message.lower %}bg-danger
+                                    {% else %}bg-primary{% endif %}
+                                {% endif %}">
+                                <i class="fas {% if notification.category == 'promotional' %}fa-star
+                                           {% elif notification.category == 'order' %}fa-shopping-bag
+                                           {% else %}fa-bell{% endif %} me-1"></i>
+                                {{ notification.get_notification_type_display }}
+                            </span>
+                            <small class="text-muted">{{ notification.created_at|timesince }} ago</small>
+                        </div>
+                        
+                        <h5 class="notification-title">{{ notification.title }}</h5>
+                        <p class="notification-message">{{ notification.message }}</p>
+                        
+                        <div class="notification-actions">
+                            {% if notification.link %}
+                                <a href="{{ notification.link }}" class="btn btn-sm 
+                                    {% if notification.category == 'promotional' %}btn-success{% else %}btn-primary{% endif %}">
+                                    <i class="fas fa-external-link-alt me-1"></i>View Details
+                                </a>
+                            {% endif %}
+                            
+                            {% if not notification.is_read %}
+                                <button class="btn btn-sm btn-light mark-read-btn" 
+                                        data-notification-id="{{ notification.id }}">
+                                    <i class="fas fa-check me-1"></i>Mark as Read
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="alert alert-info text-center py-5">
+                        <i class="fas fa-bell-slash fa-3x mb-3"></i>
+                        <p class="mb-0">No notifications yet.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Order Notifications Tab -->
+        <div class="tab-pane fade" id="orders" role="tabpanel">
+            <div class="notification-list">
+                {% with order_notifications=notifications|filter_by_category:'order' %}
+                    {% for notification in order_notifications %}
+                        <!-- Same notification card structure as above -->
+                        <div class="notification-card {% if not notification.is_read %}unread{% endif %}"
+                             id="notification-{{ notification.id }}">
+                            <!-- ... notification content ... -->
+                        </div>
+                    {% empty %}
+                        <div class="alert alert-info text-center py-5">
+                            <i class="fas fa-shopping-bag fa-3x mb-3"></i>
+                            <p class="mb-0">No order notifications yet.</p>
+                        </div>
+                    {% endfor %}
+                {% endwith %}
+            </div>
+        </div>
+
+        <!-- Promotional Notifications Tab -->
+        <div class="tab-pane fade" id="promotional" role="tabpanel">
+            <div class="notification-list">
+                {% with promo_notifications=notifications|filter_by_category:'promotional' %}
+                    {% for notification in promo_notifications %}
+                        <!-- Same notification card structure as above -->
+                        <div class="notification-card promotional {% if not notification.is_read %}unread{% endif %}"
+                             id="notification-{{ notification.id }}">
+                            <!-- ... notification content ... -->
+                        </div>
+                    {% empty %}
+                        <div class="alert alert-info text-center py-5">
+                            <i class="fas fa-bullhorn fa-3x mb-3"></i>
+                            <p class="mb-0">No promotional notifications yet.</p>
+                        </div>
+                    {% endfor %}
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .notification-card {
+        padding: 20px;
+        margin-bottom: 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .notification-card:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+
+    .notification-card.unread {
+        background-color: #f8f9fa;
+        border-left: 4px solid #007bff;
+    }
+
+    .notification-card.promotional {
+        border-left: 4px solid #28a745;
+    }
+
+    .notification-card.promotional.unread {
+        background-color: #f8fff9;
+    }
+
+    .notification-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .notification-type {
+        padding: 5px 10px;
+        font-size: 0.85rem;
+    }
+
+    .notification-title {
+        margin-bottom: 10px;
+        color: #333;
+        font-size: 1.1rem;
+    }
+
+    .notification-message {
+        color: #666;
+        margin-bottom: 15px;
+        line-height: 1.5;
+    }
+
+    .notification-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .btn-light {
+        background-color: #f8f9fa;
+        border-color: #ddd;
+    }
+
+    .btn-light:hover {
+        background-color: #e2e6ea;
+        border-color: #ddd;
+    }
+
+    #clearAllBtn {
+        background-color: #6c757d;
+        border: none;
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    #clearAllBtn:hover {
+        background-color: #5a6268;
+        transform: translateY(-2px);
+    }
+
+    .nav-tabs .nav-link {
+        color: #495057;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 0;
+        transition: all 0.3s ease;
+    }
+
+    .nav-tabs .nav-link.active {
+        color: #007bff;
+        border-bottom: 3px solid #007bff;
+    }
+
+    .nav-tabs .nav-link:hover {
+        color: #007bff;
+    }
+
+    .tab-content {
+        padding-top: 20px;
+    }
+
+    .tab-pane {
+        animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateY(-20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .notification-card {
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @media (max-width: 768px) {
+        .notification-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .btn {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle individual notification mark as read
+    document.querySelectorAll('.mark-read-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const notificationId = this.dataset.notificationId;
+            markAsRead(notificationId);
+        });
+    });
+
+    // Handle clear all notifications
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to mark all notifications as read?')) {
+                window.location.href = "{% url 'clear_all_notifications' %}";
+            }
+        });
+    }
+
+    // Initialize Bootstrap tabs
+    var triggerTabList = [].slice.call(document.querySelectorAll('.nav-link'));
+    triggerTabList.forEach(function(triggerEl) {
+        new bootstrap.Tab(triggerEl);
+    });
+
+    // Preserve active tab after page reload
+    var activeTab = localStorage.getItem('activeNotificationTab');
+    if (activeTab) {
+        var tab = new bootstrap.Tab(document.querySelector(activeTab));
+        tab.show();
+    }
+
+    // Store the active tab
+    triggerTabList.forEach(function(triggerEl) {
+        triggerEl.addEventListener('shown.bs.tab', function(event) {
+            localStorage.setItem('activeNotificationTab', '#' + event.target.id);
+        });
+    });
+
+    function markAsRead(notificationId) {
+        fetch(`/notifications/mark-read/${notificationId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const notification = document.getElementById(`notification-${notificationId}`);
+                notification.classList.remove('unread');
+                const markReadBtn = notification.querySelector('.mark-read-btn');
+                if (markReadBtn) {
+                    markReadBtn.remove();
+                }
+                
+                // Update notification count in header if it exists
+                const countElement = document.getElementById('notification-count');
+                if (countElement) {
+                    const currentCount = parseInt(countElement.textContent);
+                    if (currentCount > 0) {
+                        countElement.textContent = currentCount - 1;
+                        if (currentCount - 1 === 0) {
+                            countElement.style.display = 'none';
+                        }
+                    }
+                }
+
+                // Update tab badges
+                updateTabBadges();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error marking notification as read');
+        });
+    }
+
+    function updateTabBadges() {
+        const allCount = document.querySelectorAll('.notification-card').length;
+        const orderCount = document.querySelectorAll('#orders .notification-card').length;
+        const promoCount = document.querySelectorAll('#promotional .notification-card').length;
+
+        document.querySelector('#all-tab .badge').textContent = allCount;
+        document.querySelector('#orders-tab .badge').textContent = orderCount;
+        document.querySelector('#promotional-tab .badge').textContent = promoCount;
+    }
+
+    // Optional: Add smooth fade-out animation when marking as read
+    function fadeOutElement(element) {
+        element.style.transition = 'opacity 0.3s ease';
+        element.style.opacity = '0';
+        setTimeout(() => {
+            element.remove();
+        }, 300);
+    }
+});
+</script>
+{% endblock %}

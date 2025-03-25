@@ -1,0 +1,25 @@
+{% extends 'restaurant/base.html' %}
+
+{% block content %}
+<div class="container custom-margin-top">
+  <h2>Are you sure you want to delete {{ event.name }}?</h2>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit">Yes, delete</button>
+    <a href="{% url 'event_list' %}">Cancel</a>
+  </form>
+</div>
+  <!-- Custom CSS -->
+<style>
+    .custom-margin-top {
+        margin-top: 150px; /* Increase this value for more space */
+    }
+    
+    @media only screen and (max-width: 768px) {
+        .custom-margin-top {
+            margin-top: 150px; /* Adjust for smaller screens */
+        }
+    }
+    </style>
+
+{% endblock %}

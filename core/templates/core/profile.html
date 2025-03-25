@@ -1,0 +1,74 @@
+<!-- templates/core/profile.html -->
+{% extends 'base.html' %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4">Your Profile</h2>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row mb-3">
+                    <label for="username" class="col-sm-3 col-form-label">Username</label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" id="username" name="username" 
+                               value="{{ request.user.username }}" readonly>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="email" class="col-sm-3 col-form-label">Email</label>
+                    <div class="col-sm-9">
+                        <input type="email" class="form-control" id="email" name="email" 
+                               value="{{ request.user.email }}" readonly>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="first_name" class="col-sm-3 col-form-label">First Name</label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" id="first_name" name="first_name" 
+                               value="{{ request.user.first_name }}">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="last_name" class="col-sm-3 col-form-label">Last Name</label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" id="last_name" name="last_name" 
+                               value="{{ request.user.last_name }}">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="profile_picture" class="col-sm-3 col-form-label">Profile Picture</label>
+                    <div class="col-sm-9">
+                        {% if request.user.profile.profile_picture %}
+                            <img src="{{ request.user.profile.profile_picture.url }}" 
+                                 alt="Profile Picture" class="img-thumbnail mb-2" width="150">
+                        {% endif %}
+                        <input type="file" class="form-control" id="profile_picture" name="profile_picture">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="phone" class="col-sm-3 col-form-label">Phone Number</label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" id="phone" name="phone" 
+                               value="{{ request.user.profile.phone }}">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="address" class="col-sm-3 col-form-label">Address</label>
+                    <div class="col-sm-9">
+                        <textarea class="form-control" id="address" name="address" rows="3">{{ request.user.profile.address }}</textarea>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-9 offset-sm-3">
+                        <button type="submit" class="btn btn-primary">Update Profile</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

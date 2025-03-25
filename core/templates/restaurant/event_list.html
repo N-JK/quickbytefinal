@@ -1,0 +1,168 @@
+{% extends 'restaurant/base.html' %}
+
+{% block content %}
+<div class="container custom-margin-top">
+    <!-- Back Button and Title Row Combined -->
+    <div class="row align-items-center mb-4">
+        <div class="col-auto">
+            <button onclick="history.back()" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back
+            </button>
+        </div>
+        <div class="col">
+            <h2 class="mb-0">
+                <i class="fas fa-calendar-alt me-2"></i>Event Management
+            </h2>
+            <p class="text-muted mb-0">Manage your restaurant's events and promotions</p>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'add_event' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-2"></i>Add New Event
+            </a>
+        </div>
+    </div>
+
+    {% if events %}
+    <div class="row">
+        {% for event in events %}
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm h-100">
+                {% if event.image %}
+                <img src="{{ event.image.url }}" class="card-img-top event-image" alt="{{ event.name }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ event.name }}</h5>
+                    <p class="card-text">{{ event.description|truncatewords:30 }}</p>
+                    <div class="event-details mb-3">
+                        <div><i class="fas fa-calendar me-2"></i>{{ event.start_date|date:"M d, Y" }}</div>
+                        <div><i class="fas fa-clock me-2"></i>{{ event.start_date|time:"g:i A" }}</div>
+                        <div><i class="fas fa-map-marker-alt me-2"></i>{{ event.location }}</div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <div class="btn-group w-100">
+                        <a href="{% url 'edit_event' event.pk %}" class="btn btn-outline-primary">
+                            <i class="fas fa-edit me-2"></i>Edit
+                        </a>
+                        <button type="button" class="btn btn-outline-danger" 
+                                data-bs-toggle="modal" data-bs-target="#deleteModal{{ event.pk }}">
+                            <i class="fas fa-trash-alt me-2"></i>Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Modal for each event -->
+        <div class="modal fade" id="deleteModal{{ event.pk }}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirm Deletion</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to delete the event "{{ event.name }}"?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <form action="{% url 'delete_event' event.pk %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card shadow-sm">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+            <h5>No Events Found</h5>
+            <p class="text-muted">Start by adding your first event!</p>
+            <a href="{% url 'add_event' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-2"></i>Add Event
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .custom-margin-top {
+        margin-top: 120px;
+    }
+    
+    .btn-outline-secondary {
+        border-radius: 8px;
+        padding: 8px 16px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-outline-secondary:hover {
+        background-color: #6c757d;
+        color: white;
+        transform: translateX(-5px);
+    }
+    
+    .card {
+        border: none;
+        border-radius: 15px;
+        transition: transform 0.2s;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .event-image {
+        height: 200px;
+        object-fit: cover;
+        border-radius: 15px 15px 0 0;
+    }
+    
+    .event-details {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .event-details > div {
+        margin-bottom: 5px;
+    }
+    
+    .btn-group .btn {
+        border-radius: 8px;
+        margin: 0 5px;
+    }
+    
+    @media (max-width: 768px) {
+        .custom-margin-top {
+            margin-top: 100px;
+        }
+        
+        .row.align-items-center {
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .col-auto {
+            width: 100%;
+            text-align: center;
+        }
+        
+        .col {
+            text-align: center;
+        }
+    }
+</style>
+
+<script>
+    window.onbeforeunload = function() {
+        if (false) { // Replace with your condition for unsaved changes
+            return "You have unsaved changes. Are you sure you want to leave?";
+        }
+    };
+</script>
+{% endblock %}

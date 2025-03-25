@@ -1,0 +1,23 @@
+{% extends 'customer/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Your Ordrs</h2>
+    <ul class="list-group mt-3">
+        {% for order in orders %}
+            <li class="list-group-item">
+                <h5>Order at {{ order.restaurant.name }}</h5>
+                <p>Date: {{ order.created_at }}</p>
+                <p>Total Price: {{ order.total_price }}</p>
+                <p>Status: {{ order.get_status_display }}</p>
+                <p>Payment Method: {{ order.get_payment_method_display }}</p>
+                {% if order.status == 'pending' or order.status == 'ready_for_pickup' %}
+                    <a href="{% url 'cancel_order' order.id %}" class="btn btn-danger">Cancel Order</a>
+                {% endif %}
+            </li>
+        {% empty %}
+            <li class="list-group-item">No orders found.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

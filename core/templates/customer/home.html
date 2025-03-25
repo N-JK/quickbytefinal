@@ -1,0 +1,723 @@
+{% extends 'customer/base.html' %}
+{% load static %}
+
+{% block content %}
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+
+    .sort-by-container {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .sort-by-dropdown {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 10001;
+        min-width: 200px; 
+        padding: 16px; 
+        margin-top: 8px;
+    }
+
+
+    .sort-by-dropdown::before {
+        content: '';
+        position: absolute;
+        top: -8px; 
+        left: 20px; 
+        width: 16px;
+        height: 16px;
+        background: white;
+        transform: rotate(45deg); 
+        border-left: 1px solid #e9e9e9;
+        border-top: 1px solid #e9e9e9;
+        z-index: -1; 
+    }
+
+    
+
+   
+    .sort-by-container .filter-item {
+        height: 40px; 
+        padding: 8px 16px; 
+        vertical-align: middle;
+    }
+
+    .sort-option {
+        padding: 12px 0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        transition: background-color 0.2s;
+    }
+    .sort-option:hover {
+        background-color: #f5f5f5;
+    }
+
+
+
+    .sort-option input[type="radio"] {
+    
+        appearance: none;
+        -webkit-appearance: none;
+        width: 18px;
+        height: 18px;
+        border: 2px solid #d4d4d4;
+        border-radius: 50%;
+        margin-right: 12px;
+        position: relative;
+        cursor: pointer;
+    }
+
+    
+    .sort-option input[type="radio"]:checked {
+        border-color: #fc5d35;
+    }
+    .sort-option input[type="radio"]:checked::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 10px;
+        height: 10px;
+        background-color: #fc5d35;
+        border-radius: 50%;
+    }
+
+    
+    .sort-option label {
+        font-size: 14px;
+        color: #333;
+        cursor: pointer;
+    }
+
+
+    .apply-button {
+        width: 100%;
+        width: calc(100% - 32px);
+        margin: 8px 16px;
+        padding: 12px;
+        background-color: #fc5d35;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .apply-button:hover {
+        background-color: #e65330;
+    } 
+
+    .filter-section {
+        padding: 20px 0;
+        border-bottom: 1px solid #e9e9e9;
+        margin-bottom: 30px;
+        background: white; 
+        z-index: 9999; 
+    } 
+
+   
+    .filter-container {
+        display: flex;
+        align-items: center;  
+        flex-wrap: nowrap;
+        gap: 12px;
+        padding: 8px 0; 
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        height: 56px;  
+    }
+
+    .filter-container::-webkit-scrollbar {
+        display: none; 
+    } 
+
+
+    .filter-item {
+        height: 40px;
+        padding: 0 16px;
+        border: 1px solid #e9e9e9;
+        border-radius: 18px;
+        white-space: nowrap;
+        cursor: pointer;
+        background: white;
+        transition: all 0.3s ease;
+        font-size: 14px;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0; 
+    }
+
+    .filter-item.active {
+        background-color: #ffefd5;
+        border-color: #ffa700;
+        color: #ffa700;
+    }
+
+
+    .filter-item.sort-by {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .filter-item.sort-by svg {
+        transition: transform 0.3s;
+    }
+
+    .filter-item.sort-by.active svg {
+        transform: rotate(180deg);
+    }
+
+
+
+    .clear-filters {
+        height: 40px;
+        padding: 0 16px;
+        border: 1px solid #e9e9e9;
+        border-radius: 18px;
+        background: white;
+        cursor: pointer;
+        color: #ff4d4d;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto; 
+        flex-shrink: 0; 
+    }
+
+
+    .clear-filters {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #fc5d35;
+      border: none;
+      background: none;
+      padding: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .clear-filters svg {
+      width: 16px;
+      height: 16px;
+      stroke: #fc5d35;
+    }
+
+    .clear-filters:hover {
+        background-color: #fff5f5;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="hero_area">
+    <div class="bg-box">
+      <img src="{% static 'images/hero-bg.jpg' %}" alt="">
+    </div>
+    <!-- header section strats -->
+    <!-- end header section -->
+    <!-- slider section -->
+    <section class="slider_section ">
+      <div id="customCarousel1" class="carousel slide" data-ride="carousel">
+        <div class="carousel-inner">
+          <div class="carousel-item active">
+            <div class="container ">
+              <div class="row">
+                <div class="col-md-7 col-lg-6 ">
+                  <div class="detail-box">
+                    <h1>
+                      Fast Food Restaurant
+                    </h1>
+                    <p>
+                      Doloremque, itaque aperiam facilis rerum, commodi, temporibus sapiente ad mollitia laborum quam quisquam esse error unde. Tempora ex doloremque, labore, sunt repellat dolore, iste magni quos nihil ducimus libero ipsam.
+                    </p>
+                    <div class="btn-box">
+                      <a href="" class="btn1">
+                        Order Now
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="carousel-item ">
+            <div class="container ">
+              <div class="row">
+                <div class="col-md-7 col-lg-6 ">
+                  <div class="detail-box">
+                    <h1>
+                      Fast Food Restaurant
+                    </h1>
+                    <p>
+                      Doloremque, itaque aperiam facilis rerum, commodi, temporibus sapiente ad mollitia laborum quam quisquam esse error unde. Tempora ex doloremque, labore, sunt repellat dolore, iste magni quos nihil ducimus libero ipsam.
+                    </p>
+                    <div class="btn-box">
+                      <a href="" class="btn1">
+                        Order Now
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <div class="container ">
+              <div class="row">
+                <div class="col-md-7 col-lg-6 ">
+                  <div class="detail-box">
+                    <h1>
+                      Fast Food Restaurant
+                    </h1>
+                    <p>
+                      Doloremque, itaque aperiam facilis rerum, commodi, temporibus sapiente ad mollitia laborum quam quisquam esse error unde. Tempora ex doloremque, labore, sunt repellat dolore, iste magni quos nihil ducimus libero ipsam.
+                    </p>
+                    <div class="btn-box">
+                      <a href="" class="btn1">
+                        Order Now
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="container">
+          <ol class="carousel-indicators">
+            <li data-target="#customCarousel1" data-slide-to="0" class="active"></li>
+            <li data-target="#customCarousel1" data-slide-to="1"></li>
+            <li data-target="#customCarousel1" data-slide-to="2"></li>
+          </ol>
+        </div>
+      </div>
+    </section>
+    <!-- end slider section -->
+  </div>
+  <div class="filter-section">
+    <div class="container">
+        <div class="filter-container">
+            <div class="sort-by-container">
+                <button class="filter-item" onclick="toggleSortDropdown()">
+                    Sort By
+                    <svg class="filter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <div class="sort-by-dropdown" id="sortDropdown">
+                    <div class="sort-options-container">
+                        <div class="sort-option">
+                            <input type="radio" name="sort" id="rating" value="rating">
+                            <label for="rating">Rating</label>
+                        </div>
+                        <div class="sort-option">
+                            <input type="radio" name="sort" id="costLowToHigh" value="cost_low_to_high">
+                            <label for="costLowToHigh">Price: Low to High</label>
+                        </div>
+                        <div class="sort-option">
+                            <input type="radio" name="sort" id="costHighToLow" value="cost_high_to_low">
+                            <label for="costHighToLow">Price: High to Low</label>
+                        </div>
+                    </div>
+                    <button class="apply-button" onclick="applySorting()">Apply</button>
+                </div>
+            </div>
+
+            <!-- Filter buttons -->
+            <button class="filter-item" onclick="toggleFilter(this)" data-filter="food_type" data-value="veg">Vegetarian</button>
+            <button class="filter-item" onclick="toggleFilter(this)" data-filter="food_type" data-value="non_veg">Non-Vegetarian</button>
+            <button class="filter-item" onclick="toggleFilter(this)" data-filter="status" data-value="available">Available Now</button>
+            <button class="filter-item" onclick="toggleFilter(this)" data-filter="price_range" data-value="0-300">Less than Rs. 300</button>
+            <button class="filter-item" onclick="toggleFilter(this)" data-filter="price_range" data-value="300-600">Rs. 300-Rs. 600</button>
+
+            <button class="clear-filters" onclick="clearAllFilters()">
+                Clear All
+                <svg class="clear-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M18 6L6 18M6 6l12 12" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+  <!-- food section -->
+  <section class="food_section layout_padding-bottom">
+    <div class="container mt-5">
+      <h2>Our Menu</h2>
+      <div class="row">
+          {% for item in latest_food_items %}
+              <div class="col-sm-6 col-lg-4">
+                  <div class="box">
+                      <div class="img-box">
+                          <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                      </div>
+                      <div class="detail-box">
+                          <h5>{{ item.name }}</h5>
+                          <p><strong>Restaurant:</strong> {{ item.restaurant.name }}</p>
+                          <p>{{ item.description }}</p>
+                          <div class="options">
+                              <h6>${{ item.price }}</h6>
+                              <a href="{% url 'add_to_cart' item.id %}">
+                                  <svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 456.029 456.029" style="enable-background:new 0 0 456.029 456.029;" xml:space="preserve">
+                                      <g>
+                                          <g>
+                                              <path d="M345.6,338.862c-29.184,0-53.248,23.552-53.248,53.248c0,29.184,23.552,53.248,53.248,53.248
+                                           c29.184,0,53.248-23.552,53.248-53.248C398.336,362.926,374.784,338.862,345.6,338.862z" />
+                                          </g>
+                                      </g>
+                                      <g>
+                                          <g>
+                                              <path d="M439.296,84.91c-1.024,0-2.56-0.512-4.096-0.512H112.64l-5.12-34.304C104.448,27.566,84.992,10.67,61.952,10.67H20.48
+                                           C9.216,10.67,0,19.886,0,31.15c0,11.264,9.216,20.48,20.48,20.48h41.472c2.56,0,4.608,2.048,5.12,4.608l31.744,216.064
+                                           c4.096,27.136,27.648,47.616,55.296,47.616h212.992c26.624,0,49.664-18.944,55.296-45.056l33.28-166.4
+                                           C457.728,97.71,450.56,86.958,439.296,84.91z" />
+                                          </g>
+                                      </g>
+                                      <g>
+                                          <g>
+                                              <path d="M215.04,389.55c-1.024-28.16-24.576-50.688-52.736-50.688c-29.696,1.536-52.224,26.112-51.2,55.296
+                                           c1.024,28.16,24.064,50.688,52.224,50.688h1.024C193.536,443.31,216.576,418.734,215.04,389.55z" />
+                                          </g>
+                                      </g>
+                                  </svg>
+                              </a>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          {% endfor %}
+      </div>
+  </div>
+  </section>
+
+  <!-- end food section -->
+
+  <!-- about section -->
+  <section class="about_section layout_padding">
+    <div class="container  ">
+      <div class="row">
+        <div class="col-md-6 ">
+          <div class="img-box">
+            <img src="{% static 'images/about-img.png' %}" alt="">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-box">
+            <div class="heading_container">
+              <h2>
+                We Are Feane
+              </h2>
+            </div>
+            <p>
+              There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration
+              in some form, by injected humour, or randomised words which don't look even slightly believable. If you
+              are going to use a passage of Lorem Ipsum, you need to be sure there isn't anything embarrassing hidden in
+              the middle of text. All
+            </p>
+            <a href="">
+              Read More
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- end about section -->
+
+  <!-- client section -->
+  <section class="client_section layout_padding-bottom">
+    <div class="container">
+      <div class="heading_container heading_center psudo_white_primary mb_45">
+        <h2>
+          What Says Our Customers
+        </h2>
+      </div>
+      <div class="carousel-wrap row ">
+        <div class="owl-carousel client_owl-carousel">
+          <div class="item">
+            <div class="box">
+              <div class="detail-box">
+                <p>
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam
+                </p>
+                <h6>
+                  Moana Michell
+                </h6>
+                <p>
+                  magna aliqua
+                </p>
+              </div>
+              <div class="img-box">
+                <img src="{% static 'images/client1.jpg' %}" alt="" class="box-img">
+              </div>
+            </div>
+          </div>
+          <div class="item">
+            <div class="box">
+              <div class="detail-box">
+                <p>
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam
+                </p>
+                <h6>
+                  Mike Hamell
+                </h6>
+                <p>
+                  magna aliqua
+                </p>
+              </div>
+              <div class="img-box">
+                <img src="{% static 'images/client2.jpg' %}" alt="" class="box-img">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- end client section -->
+
+  <!-- footer section -->
+  <footer class="footer_section">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 footer-col">
+          <div class="footer_contact">
+            <h4>
+              Contact Us
+            </h4>
+            <div class="contact_link_box">
+              <a href="">
+                <i class="fa fa-map-marker" aria-hidden="true"></i>
+                <span>
+                  Location
+                </span>
+              </a>
+              <a href="">
+                <i class="fa fa-phone" aria-hidden="true"></i>
+                <span>
+                  Call +01 1234567890
+                </span>
+              </a>
+              <a href="">
+                <i class="fa fa-envelope" aria-hidden="true"></i>
+                <span>
+                  demo@gmail.com
+                </span>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 footer-col">
+          <div class="footer_detail">
+            <a href="" class="footer-logo">
+              Feane
+            </a>
+            <p>
+              Necessary, making this the first true generator on the Internet. It uses a dictionary of over 200 Latin words, combined with
+            </p>
+            <div class="footer_social">
+              <a href="">
+                <i class="fa fa-facebook" aria-hidden="true"></i>
+              </a>
+              <a href="">
+                <i class="fa fa-twitter" aria-hidden="true"></i>
+              </a>
+              <a href="">
+                <i class="fa fa-linkedin" aria-hidden="true"></i>
+              </a>
+              <a href="">
+                <i class="fa fa-instagram" aria-hidden="true"></i>
+              </a>
+              <a href="">
+                <i class="fa fa-pinterest" aria-hidden="true"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 footer-col">
+          <h4>
+            Opening Hours
+          </h4>
+          <p>
+            Everyday
+          </p>
+          <p>
+            10.00 Am -10.00 Pm
+          </p>
+        </div>
+      </div>
+      <div class="footer-info">
+        <p>
+          &copy; <span id="displayYear"></span> All Rights Reserved By
+          <a href="https://html.design/">Free Html Templates</a><br><br>
+          &copy; <span id="displayYear"></span> Distributed By
+          <a href="https://themewagon.com/" target="_blank">ThemeWagon</a>
+        </p>
+      </div>
+    </div>
+  </footer>
+  <!-- footer section -->
+
+  <!-- jQery -->
+  <script src="js/jquery-3.4.1.min.js"></script>
+  <!-- popper js -->
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous">
+  </script>
+  <!-- bootstrap js -->
+  <script src="js/bootstrap.js"></script>
+  <!-- owl slider -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js">
+  </script>
+  <!-- isotope js -->
+  <script src="https://unpkg.com/isotope-layout@3.0.4/dist/isotope.pkgd.min.js"></script>
+  <!-- nice select -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-nice-select/1.1.0/js/jquery.nice-select.min.js"></script>
+  <!-- custom js -->
+  <script src="js/custom.js"></script>
+  <!-- Google Map -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCh39n5U-4IoWpsVGUHWdqB6puEkhRLdmI&callback=myMap">
+  </script>
+  <!-- End Google Map -->
+
+  <script>
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const sortByContainer = document.querySelector('.sort-by-container');
+        const dropdown = document.getElementById('sortDropdown');
+        const button = document.querySelector('.filter-item.sort-by');
+    
+        if (!sortByContainer.contains(event.target)) {
+            dropdown.style.display = 'none';
+            button.classList.remove('active');
+        }
+    });
+    function toggleSortDropdown(button) {
+        const dropdown = document.getElementById('sortDropdown');
+        const isVisible = dropdown.style.display === 'block';
+    
+    // Toggle the dropdown
+        dropdown.style.display = isVisible ? 'none' : 'block';
+    
+    // Toggle active class on button for rotate animation
+        button.classList.toggle('active', !isVisible);
+    }
+
+    function applySorting() {
+        const selectedSort = document.querySelector('input[name="sort"]:checked');
+        if (selectedSort) {
+            let params = new URLSearchParams(window.location.search);
+            params.set('sort', selectedSort.value);
+            window.location.href = window.location.pathname + '?' + params.toString();
+        }
+    
+    // Close dropdown and remove active class
+        const dropdown = document.getElementById('sortDropdown');
+        const button = document.querySelector('.filter-item.sort-by');
+        dropdown.style.display = 'none';
+        button.classList.remove('active');
+    }
+
+    function toggleFilter(element) {
+        // Remove active class from other buttons in the same filter group
+        if (element.dataset.filter === 'food_type' || element.dataset.filter === 'price_range') {
+            document.querySelectorAll(`[data-filter="${element.dataset.filter}"]`).forEach(btn => {
+                if (btn !== element) btn.classList.remove('active');
+            });
+        }
+        
+        element.classList.toggle('active');
+        applyFilters();
+    }
+
+    function applyFilters() {
+        let params = new URLSearchParams();
+    
+    // Get all active filters
+        document.querySelectorAll('.filter-item.active').forEach(filter => {
+            const filterType = filter.dataset.filter;
+            const filterValue = filter.dataset.value;
+        
+            if (filterType && filterValue) {
+            // Allow multiple filters of different types
+                if (params.has(filterType)) {
+                    let currentValue = params.get(filterType);
+                    params.set(filterType, `${currentValue},${filterValue}`);
+                } else {
+                    params.set(filterType, filterValue);
+                }
+            }
+        });
+    
+    // Preserve sorting if exists
+        const currentSort = new URLSearchParams(window.location.search).get('sort');
+        if (currentSort) {
+            params.set('sort', currentSort);
+        }
+    
+    // Update URL with selected filters
+        window.location.href = window.location.pathname + '?' + params.toString();
+    }
+
+    function clearAllFilters() {
+        // Remove active class from all filter buttons
+        document.querySelectorAll('.filter-item').forEach(button => {
+            button.classList.remove('active');
+        });
+        
+        // Uncheck all sort radio buttons
+        document.querySelectorAll('input[name="sort"]').forEach(radio => {
+            radio.checked = false;
+        });
+        
+        // Redirect to base URL without parameters
+        window.location.href = window.location.pathname;
+    }
+
+// Initialize filters from URL parameters
+    document.addEventListener('DOMContentLoaded', function() {
+        const params = new URLSearchParams(window.location.search);
+    
+    // Set active state for filters
+        params.forEach((value, key) => {
+        // Handle multiple values for same filter type
+            const values = value.split(',');
+            values.forEach(val => {
+                const filterButton = document.querySelector(`[data-filter="${key}"][data-value="${val}"]`);
+                if (filterButton) {
+                    filterButton.classList.add('active');
+                }
+            });
+        });
+    
+    // Set sort radio button if sort parameter exists
+        const sortValue = params.get('sort');
+        if (sortValue) {
+            const radioButton = document.querySelector(`input[name="sort"][value="${sortValue}"]`);
+            if (radioButton) {
+                radioButton.checked = true;
+            }
+        }
+    });
+  </script>
+</body>
+
+</html>
+
+{% endblock %}

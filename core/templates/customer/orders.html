@@ -1,0 +1,176 @@
+{% extends 'customer/base.html' %}
+
+{% block content %}
+<div class="orders-container">
+    <h1 class="orders-title">Manage Orders</h1>
+
+    <!-- Tab Navigation -->
+    <div class="orders-tabs">
+        <button class="tab-button {% if active_tab == 'active' %}active{% endif %}" 
+                onclick="location.href='?tab=active'">
+            Active Orders
+        </button>
+        <button class="tab-button {% if active_tab == 'history' %}active{% endif %}" 
+                onclick="location.href='?tab=history'">
+            Order History
+        </button>
+    </div>
+
+    <!-- Active Orders Section -->
+    <div class="orders-section" id="activeOrders" {% if active_tab != 'active' %}style="display: none;"{% endif %}>
+        <h2>Active Orders</h2>
+        {% if active_orders %}
+            {% for order in active_orders %}
+                <div class="order-card">
+                    <div class="order-header">
+                        <h3>Order #{{ order.id }}</h3>
+                        <span class="order-status {{ order.status }}">{{ order.get_status_display }}</span>
+                    </div>
+                    <div class="order-details">
+                        <p>Restaurant: {{ order.restaurant.name }}</p>
+                        <p>Order Type: {{ order.get_order_type_display }}</p>
+                        <p>Total: ₹{{ order.total_price }}</p>
+                    </div>
+                    <a href="{% url 'order_detail' order.id %}" class="view-details-btn">View Details</a>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="no-orders">No active orders</p>
+        {% endif %}
+    </div>
+
+    <!-- Order History Section -->
+    <div class="orders-section" id="orderHistory" {% if active_tab != 'history' %}style="display: none;"{% endif %}>
+        <h2>Order History</h2>
+        {% if order_history %}
+            {% for order in order_history %}
+                <div class="order-card">
+                    <div class="order-header">
+                        <h3>Order #{{ order.id }}</h3>
+                        <span class="order-status {{ order.status }}">{{ order.get_status_display }}</span>
+                    </div>
+                    <div class="order-details">
+                        <p>Restaurant: {{ order.restaurant.name }}</p>
+                        <p>Order Type: {{ order.get_order_type_display }}</p>
+                        <p>Total: ₹{{ order.total_price }}</p>
+                        {% if order.id in order_reviews %}
+                            <div class="review-section">
+                                <p>Your Rating: {{ order_reviews|get:order.id|rating }}</p>
+                                <a href="{% url 'edit_review' order.id %}" class="edit-review-btn">Edit Review</a>
+                            </div>
+                        {% elif order.status in 'completed,delivered' %}
+                            <a href="{% url 'submit_review' order.id %}" class="submit-review-btn">Submit Review</a>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'order_detail' order.id %}" class="view-details-btn">View Details</a>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="no-orders">No order history</p>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.orders-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.orders-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.orders-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.tab-button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background: #f0f0f0;
+}
+
+.tab-button.active {
+    background: #007bff;
+    color: white;
+}
+
+.order-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.order-status {
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.view-details-btn, .edit-review-btn, .submit-review-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    color: white;
+    background: #007bff;
+    margin-top: 10px;
+}
+
+.edit-review-btn {
+    background: #28a745;
+}
+
+.submit-review-btn {
+    background: #17a2b8;
+}
+
+.no-orders {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+</style>
+
+<script>
+function showTab(tabName) {
+    // Update URL parameter
+    const url = new URL(window.location);
+    url.searchParams.set('tab', tabName);
+    window.history.pushState({}, '', url);
+
+    // Show/hide appropriate sections
+    document.getElementById('activeOrders').style.display = tabName === 'active' ? 'block' : 'none';
+    document.getElementById('orderHistory').style.display = tabName === 'history' ? 'block' : 'none';
+
+    // Update tab buttons
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active');
+    });
+    document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active');
+}
+
+// Initialize based on URL parameter
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const activeTab = urlParams.get('tab') || 'active';
+    showTab(activeTab);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,181 @@
+{% extends 'customer/base.html' %}
+
+{% block content %}
+<style>
+    .rating-container {
+        margin: 20px 0;
+    }
+
+    .stars-container {
+        display: inline-block;
+        position: relative;
+        height: 30px;
+        width: 150px; /* Width for 5 stars */
+    }
+
+    .stars-container .stars-background,
+    .stars-container .stars-foreground {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 100%;
+        background-image: url("data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%23ddd' d='M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z'/></svg>");
+        background-repeat: repeat-x;
+        background-size: 30px 30px;
+    }
+
+    .stars-container .stars-foreground {
+        width: 0%;
+        background-image: url("data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%23FFD700' d='M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z'/></svg>");
+        transition: width 0.15s ease-in-out;
+    }
+
+    .stars-container:hover .stars-foreground {
+        background-image: url("data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%23FFED4A' d='M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z'/></svg>");
+    }
+
+    .rating-value {
+        font-size: 18px;
+        margin-left: 10px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .review-section {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .comment-box {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-top: 10px;
+        min-height: 100px;
+    }
+
+    .submit-btn {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 20px;
+    }
+
+    .submit-btn:hover {
+        background-color: #0056b3;
+    }
+</style>
+
+<h2>Submit Review for Order #{{ order.id }}</h2>
+
+<form method="post" id="reviewForm">
+    {% csrf_token %}
+    
+    <div class="review-section">
+        <h3>Restaurant Review</h3>
+        <div class="rating-container">
+            <div class="stars-container" id="restaurantStars">
+                <div class="stars-background"></div>
+                <div class="stars-foreground"></div>
+            </div>
+            <span class="rating-value" id="restaurantRatingValue">0.0</span>
+            <input type="hidden" name="restaurant_rating" id="restaurantRatingInput" value="0">
+        </div>
+        <div>
+            <label for="restaurant_comment">Comment:</label>
+            <textarea id="restaurant_comment" name="restaurant_comment" class="comment-box" required></textarea>
+        </div>
+    </div>
+
+    <!-- {% if order.order_type == 'delivery' and order.delivery_personnel %}
+    <div class="review-section">
+        <h3>Delivery Personnel Review</h3>
+        <div class="rating-container">
+            <div class="stars-container" id="deliveryStars">
+                <div class="stars-background"></div>
+                <div class="stars-foreground"></div>
+            </div>
+            <span class="rating-value" id="deliveryRatingValue">0.0</span>
+            <input type="hidden" name="delivery_rating" id="deliveryRatingInput" value="0">
+        </div>
+        <div>
+            <label for="delivery_comment">Comment:</label>
+            <textarea id="delivery_comment" name="delivery_comment" class="comment-box" required></textarea>
+        </div>
+    </div> -->
+    {% endif %}
+
+    <button type="submit" class="submit-btn">Submit Review</button>
+</form>
+
+<script>
+function initializeRating(containerId, valueId, inputId) {
+    const container = document.getElementById(containerId);
+    const foreground = container.querySelector('.stars-foreground');
+    const valueDisplay = document.getElementById(valueId);
+    const input = document.getElementById(inputId);
+    
+    container.addEventListener('mousemove', function(e) {
+        const rect = container.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const percentage = (x / rect.width) * 100;
+        const rating = (percentage / 20).toFixed(1); // Convert to 0-5 scale
+        
+        if (rating >= 0 && rating <= 5) {
+            foreground.style.width = percentage + '%';
+            valueDisplay.textContent = rating;
+        }
+    });
+
+    container.addEventListener('mouseleave', function() {
+        const currentRating = input.value;
+        foreground.style.width = (currentRating * 20) + '%';
+        valueDisplay.textContent = currentRating;
+    });
+
+    container.addEventListener('click', function(e) {
+        const rect = container.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const percentage = (x / rect.width) * 100;
+        const rating = (percentage / 20).toFixed(1); // Convert to 0-5 scale
+        
+        if (rating >= 0 && rating <= 5) {
+            input.value = rating;
+            valueDisplay.textContent = rating;
+            foreground.style.width = percentage + '%';
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeRating('restaurantStars', 'restaurantRatingValue', 'restaurantRatingInput');
+    
+    if (document.getElementById('deliveryStars')) {
+        initializeRating('deliveryStars', 'deliveryRatingValue', 'deliveryRatingInput');
+    }
+
+    document.getElementById('reviewForm').addEventListener('submit', function(e) {
+        const restaurantRating = parseFloat(document.getElementById('restaurantRatingInput').value);
+        if (restaurantRating === 0) {
+            e.preventDefault();
+            alert('Please provide a rating for the restaurant');
+            return;
+        }
+
+        const deliveryInput = document.getElementById('deliveryRatingInput');
+        if (deliveryInput && parseFloat(deliveryInput.value) === 0) {
+            e.preventDefault();
+            alert('Please provide a rating for the delivery personnel');
+            return;
+        }
+    });
+});
+</script>
+{% endblock %}

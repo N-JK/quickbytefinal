@@ -1,0 +1,155 @@
+{% extends 'restaurant/base.html' %}
+
+{% block content %}
+<div class="container" style="margin-top: 125px;">  <!-- Increased margin-top -->
+    <div class="card">
+        <!-- Rest of your code remains the same -->
+    </div>
+</div>
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2>Order #{{ order.id }}</h2>
+            <div class="status-badge">
+                <span class="badge 
+                    {% if order.status == 'completed' %}bg-success
+                    {% elif order.status == 'canceled' %}bg-danger
+                    {% elif order.status == 'preparing' %}bg-warning
+                    {% elif order.status == 'out_for_delivery' %}bg-info
+                    {% else %}bg-secondary{% endif %}">
+                    {{ order.get_status_display }}
+                </span>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <!-- Customer Information -->
+            <div class="section mb-4">
+                <h4>Customer Information</h4>
+                <div class="info-box">
+                    <p><strong>Name:</strong> {{ order.customer.get_full_name|default:order.customer.username }}</p>
+                    {% if order.customer.customer.phone_number %}
+                        <p><strong>Phone:</strong> {{ order.customer.customer.phone_number }}</p>
+                    {% endif %}
+                    {% if order.order_type == 'delivery' %}
+                        <p><strong>Delivery Address:</strong> {{ order.delivery_address }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Order Details -->
+            <div class="section mb-4">
+                <h4>Order Details</h4>
+                <div class="info-box">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Order Type:</strong> {{ order.get_order_type_display }}</p>
+                            <p><strong>Order Date:</strong> {{ order.created_at|date:"F d, Y H:i" }}</p>
+                            <p><strong>Payment Method:</strong> {{ order.get_payment_method_display }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Payment Status:</strong> {{ order.get_payment_status_display }}</p>
+                            <p><strong>Last Updated:</strong> {{ order.updated_at|date:"F d, Y H:i" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Items -->
+            <div class="section mb-4">
+                <h4>Order Items</h4>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Item</th>
+                                <th>Type</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order_items %}
+                                <tr>
+                                    <td>{{ item.food_item.name }}</td>
+                                    <td><span class="badge {% if item.food_item.food_type == 'veg' %}bg-success{% else %}bg-danger{% endif %}">
+                                        {{ item.food_item.get_food_type_display }}
+                                    </span></td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>${{ item.food_item.price }}</td>
+                                    <td>${{ item.total_price }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="4" class="text-end"><strong>Total Amount:</strong></td>
+                                <td><strong>${{ order.total_price }}</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Update Status -->
+            <div class="section">
+                <h4>Update Status</h4>
+                <form method="post" action="{% url 'update_order_status' order.id %}" class="mt-3">
+                    {% csrf_token %}
+                    <div class="input-group" style="max-width: 400px;">
+                        <select name="status" class="form-select">
+                            {% if order.order_type == 'pickup' %}
+                                <option value="preparing" {% if order.status == 'preparing' %}selected{% endif %}>Preparing</option>
+                                <option value="ready_for_pickup" {% if order.status == 'ready_for_pickup' %}selected{% endif %}>Ready for Pickup</option>
+                                <option value="completed" {% if order.status == 'completed' %}selected{% endif %}>Completed</option>
+                                <option value="canceled" {% if order.status == 'canceled' %}selected{% endif %}>Canceled</option>
+                            {% else %}
+                                <option value="preparing" {% if order.status == 'preparing' %}selected{% endif %}>Preparing</option>
+                                <option value="out_for_delivery" {% if order.status == 'out_for_delivery' %}selected{% endif %}>Out for Delivery</option>
+                                <option value="delivered" {% if order.status == 'delivered' %}selected{% endif %}>Delivered</option>
+                                <option value="completed" {% if order.status == 'completed' %}selected{% endif %}>Completed</option>
+                                <option value="canceled" {% if order.status == 'canceled' %}selected{% endif %}>Canceled</option>
+                            {% endif %}
+                        </select>
+                        <button type="submit" class="btn btn-primary">Update Status</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.section {
+    padding: 20px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.section h4 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.info-box {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+.status-badge .badge {
+    font-size: 1rem;
+    padding: 8px 16px;
+}
+
+.table th {
+    background-color: #f8f9fa;
+}
+
+.badge {
+    padding: 5px 10px;
+}
+</style>
+{% endblock %}

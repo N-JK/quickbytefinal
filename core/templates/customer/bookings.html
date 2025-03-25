@@ -1,0 +1,287 @@
+
+{% extends 'customer/base.html' %}
+
+{% block content %}
+<div class="bookings-container">
+    <div class="container py-5">
+        <!-- Header Section -->
+        <div class="section-header mb-5">
+            <h1 class="main-title">Your Reservations</h1>
+            <p class="text-muted">Manage all your restaurant bookings in one place</p>
+        </div>
+
+        <!-- Upcoming Reservations Section -->
+        <div class="reservation-section mb-5">
+            <div class="section-header d-flex justify-content-between align-items-center mb-4">
+                <h2>Upcoming Reservations</h2>
+                <span class="badge bg-primary rounded-pill">
+                    {{ upcoming_reservations.count }} Upcoming
+                </span>
+            </div>
+
+            <div class="reservation-grid">
+                {% for reservation in upcoming_reservations %}
+                    <div class="reservation-card">
+                        <div class="card-header">
+                            <div class="restaurant-info">
+                                <h3>{{ reservation.restaurant.name }}</h3>
+                                <span class="status-badge status-{{ reservation.status }}">
+                                    {{ reservation.get_status_display }}
+                                </span>
+                            </div>
+                            <div class="reservation-meta">
+                                <span class="date">
+                                    <i class="far fa-calendar-alt"></i>
+                                    {{ reservation.date|date:"D, M d, Y" }}
+                                </span>
+                                <span class="time">
+                                    <i class="far fa-clock"></i>
+                                    {{ reservation.time|time:"g:i A" }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="details">
+                                <div class="detail-item">
+                                    <i class="fas fa-users"></i>
+                                    <span>{{ reservation.number_of_persons }} Guests</span>
+                                </div>
+                                {% if reservation.special_request %}
+                                    <div class="detail-item">
+                                        <i class="fas fa-comment-alt"></i>
+                                        <span>{{ reservation.special_request }}</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-times"></i>
+                        <p>No upcoming reservations</p>
+                        <a href="{% url 'restaurant_list' %}" class="btn btn-primary">
+                            Browse Restaurants
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Past Reservations Section -->
+        <div class="reservation-section">
+            <div class="section-header d-flex justify-content-between align-items-center mb-4">
+                <h2>Past Reservations</h2>
+                <span class="badge bg-secondary rounded-pill">
+                    {{ past_reservations.count }} Past
+                </span>
+            </div>
+
+            <div class="reservation-grid">
+                {% for reservation in past_reservations %}
+                    <div class="reservation-card past">
+                        <div class="card-header">
+                            <div class="restaurant-info">
+                                <h3>{{ reservation.restaurant.name }}</h3>
+                                <span class="status-badge status-completed">
+                                    Completed
+                                </span>
+                            </div>
+                            <div class="reservation-meta">
+                                <span class="date">
+                                    <i class="far fa-calendar-alt"></i>
+                                    {{ reservation.date|date:"D, M d, Y" }}
+                                </span>
+                                <span class="time">
+                                    <i class="far fa-clock"></i>
+                                    {{ reservation.time|time:"g:i A" }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="details">
+                                <div class="detail-item">
+                                    <i class="fas fa-users"></i>
+                                    <span>{{ reservation.number_of_persons }} Guests</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="empty-state">
+                        <i class="fas fa-history"></i>
+                        <p>No past reservations</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #2c3e50;
+    --success-color: #2ecc71;
+    --warning-color: #f1c40f;
+    --danger-color: #e74c3c;
+    --light-bg: #f8f9fa;
+    --border-radius: 12px;
+    --card-shadow: 0 2px 15px rgba(0,0,0,0.1);
+}
+
+.bookings-container {
+    background-color: var(--light-bg);
+    min-height: 100vh;
+}
+
+.main-title {
+    font-size: 2.5rem;
+    color: var(--secondary-color);
+    margin-bottom: 0.5rem;
+}
+
+.reservation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+.reservation-card {
+    background: white;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.3s ease;
+}
+
+.reservation-card:hover {
+    transform: translateY(-5px);
+}
+
+.reservation-card.past {
+    opacity: 0.8;
+}
+
+.card-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.restaurant-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.restaurant-info h3 {
+    font-size: 1.25rem;
+    margin: 0;
+    color: var(--secondary-color);
+}
+
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.status-badge.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-badge.status-accepted {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.status-rejected {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-badge.status-completed {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+.reservation-meta {
+    display: flex;
+    gap: 1.5rem;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.reservation-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.details {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #666;
+}
+
+.detail-item i {
+    color: var(--primary-color);
+}
+
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    background: white;
+    border-radius: var(--border-radius);
+    color: #666;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: #ccc;
+    margin-bottom: 1rem;
+}
+
+.empty-state .btn {
+    margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+    .reservation-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .card-header {
+        padding: 1rem;
+    }
+
+    .restaurant-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .reservation-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+</style>
+
+<!-- Make sure to include Font Awesome in your base template -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+{% endblock %}

@@ -1,0 +1,119 @@
+<!-- templates/restaurant/notifications.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Restaurant Notifications</h2>
+        {% if notifications %}
+            <button class="btn btn-secondary" id="clearAllBtn">Mark All as Read</button>
+        {% endif %}
+    </div>
+
+    <div class="notification-list">
+        {% for notification in notifications %}
+            <div class="notification-card {% if not notification.is_read %}unread{% endif %}"
+                 id="notification-{{ notification.id }}">
+                <div class="notification-header">
+                    <span class="notification-type badge 
+                        {% if notification.notification_type == 'new_order' %}bg-success
+                        {% elif notification.notification_type == 'new_reservation' %}bg-primary
+                        {% else %}bg-danger{% endif %}">
+                        {{ notification.get_notification_type_display }}
+                    </span>
+                    <small class="text-muted">{{ notification.created_at|timesince }} ago</small>
+                </div>
+                
+                <h5 class="notification-title">{{ notification.title }}</h5>
+                <p class="notification-message">{{ notification.message }}</p>
+                
+                {% if notification.link %}
+                    <a href="{{ notification.link }}" class="btn btn-sm btn-primary">View Details</a>
+                {% endif %}
+                
+                {% if not notification.is_read %}
+                    <button class="btn btn-sm btn-light mark-read-btn" 
+                            data-notification-id="{{ notification.id }}">
+                        Mark as Read
+                    </button>
+                {% endif %}
+            </div>
+        {% empty %}
+            <div class="alert alert-info">No notifications yet.</div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .notification-card {
+        padding: 15px;
+        margin-bottom: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .notification-card.unread {
+        background-color: #f8f9fa;
+        border-left: 4px solid #007bff;
+    }
+
+    .notification-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .notification-title {
+        margin-bottom: 10px;
+    }
+
+    .notification-message {
+        color: #666;
+        margin-bottom: 15px;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle individual notification mark as read
+    document.querySelectorAll('.mark-read-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const notificationId = this.dataset.notificationId;
+            markAsRead(notificationId);
+        });
+    });
+
+    // Handle clear all notifications
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', function() {
+            if (confirm('Mark all notifications as read?')) {
+                window.location.href = "{% url 'clear_all_notifications' %}";
+            }
+        });
+    }
+
+    function markAsRead(notificationId) {
+        fetch(`/notifications/mark-read/${notificationId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const notification = document.getElementById(`notification-${notificationId}`);
+                notification.classList.remove('unread');
+                const markReadBtn = notification.querySelector('.mark-read-btn');
+                if (markReadBtn) markReadBtn.remove();
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+});
+</script>
+{% endblock %}

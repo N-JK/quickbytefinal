@@ -1,0 +1,101 @@
+
+<!-- templates/restaurant/dashboard.html -->
+{% extends 'base.html' %}
+
+{% block title %}Restaurant Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>{{ restaurant.name }} Dashboard</h2>
+            <div>
+                <button class="btn btn-success me-2">
+                    {% if restaurant.is_open %}
+                        <i class="fas fa-door-open"></i> Open
+                    {% else %}
+                        <i class="fas fa-door-closed"></i> Closed
+                    {% endif %}
+                </button>
+                <a href="{% url 'core:menu_management' %}" class="btn btn-primary">
+                    <i class="fas fa-utensils"></i> Menu Management
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Total Orders</h5>
+                <h2 class="card-text">{{ total_orders }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Total Revenue</h5>
+                <h2 class="card-text">${{ total_revenue|floatformat:2 }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">Pending Orders</h5>
+                <h2 class="card-text">{{ pending_orders.count }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>Recent Orders</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Items</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in pending_orders %}
+                                <tr>
+                                    <td>#{{ order.id }}</td>
+                                    <td>{{ order.customer.get_full_name }}</td>
+                                    <td>{{ order.items.count }} items</td>
+                                    <td>${{ order.total_price }}</td>
+                                    <td>
+                                        <span class="badge bg-warning">{{ order.get_status_display }}</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-success">Accept</button>
+                                        <button class="btn btn-sm btn-danger">Reject</button>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No pending orders</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

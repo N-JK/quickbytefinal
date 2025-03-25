@@ -1,0 +1,203 @@
+
+{% load static %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'delivery_home' %}">
+            <i class="fas fa-motorcycle me-2"></i>Delivery Dashboard
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+
+        <!-- Navbar Links -->
+        <div class="collapse navbar-collapse" id="deliveryNavbar">
+            <ul class="navbar-nav me-auto">
+                <!-- Home -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'delivery_home' %}active{% endif %}" 
+                       href="{% url 'delivery_home' %}">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+
+                <!-- Current Deliveries -->
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-motorcycle"></i> Current Deliveries
+                    </a>
+                </li>
+
+                <!-- Delivery History -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'delivery_personnel_reviews' %}">
+                        <i class="fas fa-history"></i> Reviews
+                    </a>
+                </li>
+      
+                <!-- Earnings -->
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-wallet"></i> Earnings
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Right Side Items -->
+            <ul class="navbar-nav ms-auto">
+                <!-- Availability Toggle -->
+                <li class="nav-item">
+                    <form method="post" action="{% url 'toggle_availability' %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn {% if request.user.Delivery_personnel.is_available %}btn-success{% else %}btn-danger{% endif %} btn-sm mt-1">
+                            <i class="fas {% if request.user.Delivery_personnel.is_available %}fa-toggle-on{% else %}fa-toggle-off{% endif %}"></i>
+                            {% if request.user.Delivery_personnel.is_available %}Available{% else %}Unavailable{% endif %}
+                        </button>
+                    </form>
+                </li>
+
+                <!-- Notifications -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-bell"></i>
+                        {% if unread_notifications_count > 0 %}
+                            <span class="badge bg-danger">{{ unread_notifications_count }}</span>
+                        {% endif %}
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown">
+                        <a class="dropdown-item" href="{% url 'notification_list' %}">View All Notifications</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{% url 'clear_all_notifications' %}">Clear All</a>
+                    </div>
+                </li>
+
+                <!-- Profile Dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle"></i> 
+                        {{ request.user.username }}
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                        <a class="dropdown-item" href="{% url 'delivery_profile' %}">
+                            <i class="fas fa-id-card"></i> Profile
+                        </a>
+                        
+                        <!-- Settings with submenu -->
+                        <div class="dropdown-submenu">
+                            <a class="dropdown-item" href="#" id="settingsDropdown" role="button" data-bs-toggle="collapse" data-bs-target="#settingsSubmenu">
+                                <i class="fas fa-cog"></i> Settings
+                                <i class="fas fa-chevron-right float-end mt-1"></i>
+                            </a>
+                            <div class="collapse" id="settingsSubmenu">
+                                <a class="dropdown-item ps-4" href="{% url 'password_reset' %}">
+                                    <i class="fas fa-key"></i> Reset Password
+                                </a>
+                                <a class="dropdown-item ps-4 text-danger" href="{% url 'delete_account' %}">
+                                    <i class="fas fa-user-times"></i> Delete Account
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item text-danger" href="{% url 'logout' %}">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Status Bar -->
+<div class="bg-light py-2">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <small>
+                    <i class="fas fa-clock"></i> Working Hours: 
+                    {% if request.user.Delivery_personnel.working_timings %}
+                        {{ request.user.Delivery_personnel.working_timings }}
+                    {% else %}
+                        Not Set
+                    {% endif %}
+                </small>
+            </div>
+            <div class="col-md-4 text-center">
+                <small>
+                    <i class="fas fa-wallet"></i> Balance: 
+                    ${{ request.user.Delivery_personnel.balance|floatformat:2 }}
+                </small>
+            </div>
+            <div class="col-md-4 text-end">
+                <small>
+                    <i class="fas fa-motorcycle"></i> Status: 
+                    <span class="{% if request.user.Delivery_personnel.is_available %}text-success{% else %}text-danger{% endif %}">
+                        {% if request.user.Delivery_personnel.is_available %}Active{% else %}Inactive{% endif %}
+                    </span>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add this at the end of your body tag -->
+<style>
+    .dropdown-submenu {
+        position: relative;
+    }
+    
+    #settingsSubmenu {
+        background-color: inherit;
+        border: none;
+    }
+    
+    #settingsSubmenu .dropdown-item {
+        padding-left: 2rem;
+    }
+    
+    #settingsSubmenu .dropdown-item:hover {
+        background-color: rgba(0,0,0,.1);
+    }
+</style>
+<script>
+    // Function to update notification count
+    function updateNotificationCount() {
+        fetch("{% url 'check_notifications' %}")
+            .then(response => response.json())
+            .then(data => {
+                const badge = document.querySelector('#notificationDropdown .badge');
+                if (data.count > 0) {
+                    if (!badge) {
+                        const newBadge = document.createElement('span');
+                        newBadge.className = 'badge bg-danger';
+                        newBadge.textContent = data.count;
+                        document.querySelector('#notificationDropdown').appendChild(newBadge);
+                    } else {
+                        badge.textContent = data.count;
+                    }
+                } else if (badge) {
+                    badge.remove();
+                }
+            });
+    }
+
+    // Update notifications every 30 seconds
+    setInterval(updateNotificationCount, 30000);
+
+
+
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var settingsDropdown = document.getElementById('settingsDropdown');
+        var dropdownMenu = settingsDropdown.closest('.dropdown-menu');
+        
+        // Prevent dropdown from closing when clicking inside
+        dropdownMenu.addEventListener('click', function(e) {
+            if (e.target.id === 'settingsDropdown' || e.target.closest('#settingsSubmenu')) {
+                e.stopPropagation();
+            }
+        });
+    });
+</script>
